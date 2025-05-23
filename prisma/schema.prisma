@@ -14,28 +14,62 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  title     String   @db.VarChar(255)
-  content   String?
-  published Boolean  @default(false)
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  Int
-}
-
-model Profile {
-  id     Int     @id @default(autoincrement())
-  bio    String?
-  user   User    @relation(fields: [userId], references: [id])
-  userId Int     @unique
+enum Role {
+  USER
+  ADMIN
 }
 
 model User {
-  id      Int      @id @default(autoincrement())
-  email   String   @unique
-  name    String?
-  posts   Post[]
-  profile Profile?
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Worker {
+  id                 Int                 @id @default(autoincrement())
+  name               String
+  role               String?             // example: "operator", "supervisor"
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  assignments        Assignment[]
+  performanceRecords PerformanceRecord[]
+}
+
+model ProductionLine {
+  id          Int          @id @default(autoincrement())
+  name        String
+  description String?
+  capacity    Int?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  assignments Assignment[]
+}
+
+model Assignment {
+  id               Int            @id @default(autoincrement())
+  workerId         Int
+  productionLineId Int
+  position         String         // example: "operator"
+  date             DateTime
+  shift            String         // example : "morning"
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  worker           Worker         @relation(fields: [workerId], references: [id])
+  productionLine   ProductionLine @relation(fields: [productionLineId], references: [id])
+}
+
+model PerformanceRecord {
+  id          Int      @id @default(autoincrement())
+  workerId    Int
+  date        DateTime
+  piecesMade  Int
+  timeTaken   Float    // in hours or minutes
+  errorRate   Float    // percentage
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  worker      Worker   @relation(fields: [workerId], references: [id])
 }
