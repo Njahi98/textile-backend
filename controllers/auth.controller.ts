@@ -2,38 +2,39 @@ import { NextFunction, Request, Response } from 'express';
 import { prisma } from '../server';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import {
-  LoginRequest,
-  loginSchema,
-  RegisterRequest,
-  registerSchema,
-} from '../utils/validation';
+import { RegisterRequest, LoginRequest } from '../utils/validation';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_EXPIRES_IN = '7d';
+const COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export const register = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): Promise<void> => {
   try {
-    const validatedData = registerSchema.parse(req.body) as RegisterRequest;
-    //check if user already exists
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        email: validatedData.email,
-        name: validatedData.name,
-      },
+    const { email, password, name }: RegisterRequest = req.body;
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
     });
+
     if (existingUser) {
-      res.status(400).json({ error: 'User already exists' });
+      res.status(409).json({ 
+        error: 'User already exists',
+        message: 'An account with this email already exists'
+      });
       return;
     }
-    //hash password
-    const hashedPassword = await bcrypt.hash(validatedData.password, 12);
+
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     const user = await prisma.user.create({
       data: {
-        email: validatedData.email,
-        name: validatedData.name,
+        email,
+        name,
         password: hashedPassword,
       },
       select: {
@@ -45,21 +46,21 @@ export const register = async (
       },
     });
 
-    //generate JWT token
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '15m' }
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
     );
 
-    //set Http Only Cookie
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 15 * 60 * 1000,
+      maxAge: COOKIE_MAX_AGE,
     });
+
     res.status(201).json({
+      success: true,
       message: 'User registered successfully',
       user,
     });
@@ -72,14 +73,12 @@ export const login = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): Promise<void> => {
   try {
-    const validatedData = loginSchema.parse(req.body) as LoginRequest;
-    //find user by email
+    const { email, password }: LoginRequest = req.body;
+
     const user = await prisma.user.findUnique({
-      where: {
-        email: validatedData.email,
-      },
+      where: { email },
       select: {
         id: true,
         email: true,
@@ -89,33 +88,40 @@ export const login = async (
         createdAt: true,
       },
     });
+
     if (!user) {
-      res.status(401).json({ error: 'Invalid credentials' });
+      res.status(401).json({ 
+        error: 'Invalid credentials',
+        message: 'Email or password is incorrect'
+      });
       return;
     }
-    // Check password
-    const isValidPassword = await bcrypt.compare(
-      validatedData.password,
-      user.password
-    );
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    
     if (!isValidPassword) {
-      res.status(401).json({ error: 'Invalid credentials' });
+      res.status(401).json({ 
+        error: 'Invalid credentials',
+        message: 'Email or password is incorrect'
+      });
       return;
     }
-    // Generate JWT
+
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '15m' }
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
     );
-    // Set HTTP-only cookie
+
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 15 * 60 * 1000,
+      maxAge: COOKIE_MAX_AGE,
     });
+
     res.json({
+      success: true,
       message: 'Login successful',
       user: {
         id: user.id,
@@ -129,7 +135,15 @@ export const login = async (
   }
 };
 
-export const logout = (req: Request, res: Response) => {
-  res.clearCookie('token');
-  res.status(200).json({ message: 'Logged out successfully' });
+export const logout = (req: Request, res: Response): void => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  });
+  
+  res.json({ 
+    success: true,
+    message: 'Logged out successfully' 
+  });
 };

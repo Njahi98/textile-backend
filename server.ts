@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import cookieParse from 'cookie-parser';
 import { PrismaClient } from './generated/prisma';
 import authRoutes from './routes/auth';
+import { errorHandler } from './middleware/errorHandler';
 dotenv.config();
 
 const app = express();
@@ -33,7 +34,7 @@ app.get('/health', (req, res) => {
 });
 
 // Error handling middleware
-// app.use(errorHandler);
+app.use(errorHandler);
 
 // Graceful shutdown
 // Listen to SIGINT or "signal interrupt" to gracefully shut down the server
