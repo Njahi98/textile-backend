@@ -1,10 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import cookieParse from 'cookie-parser';
 import { PrismaClient } from './generated/prisma';
 import authRoutes from './routes/auth';
 import { errorHandler } from './middleware/errorHandler';
+import cookieParser from 'cookie-parser';
+
 dotenv.config();
 
 const app = express();
@@ -22,7 +23,7 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParse());
+app.use(cookieParser());
 
 //Routes
 app.use('/api/auth', authRoutes);
@@ -31,6 +32,14 @@ app.use('/api/auth', authRoutes);
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({
+    error: 'Route not found',
+    message: `The requested route ${req.originalUrl} does not exist`,
+  });
 });
 
 // Error handling middleware
