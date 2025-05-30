@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { Prisma } from '../generated/prisma';
 
-interface CustomError extends Error {
+export interface CustomError extends Error {
   statusCode?: number;
 }
 
@@ -64,6 +64,7 @@ export const errorHandler = (
   if (error.statusCode) {
     res.status(error.statusCode).json({
       error: error.message || 'An error occurred',
+      message: error.message,
     });
     return;
   }

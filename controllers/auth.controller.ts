@@ -3,8 +3,16 @@ import { prisma } from '../server';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { RegisterRequest, LoginRequest } from '../utils/validation';
+import { CustomError } from '@/middleware/errorHandler';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+if (!process.env.JWT_SECRET) {
+  const error = new Error('JWT_SECRET is not configured') as CustomError;
+  error.statusCode = 500;
+  error.message = 'Internal server configuration error';
+  throw error;
+}
+
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = '7d';
 const COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 

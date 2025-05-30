@@ -16,8 +16,6 @@ const PORT = process.env.PORT || 3001;
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    // It allows cookies (like a JWT) to be sent with the request,
-    // Without this, frontend won’t be able to send or receive cookies, which breaks login/logout
     credentials: true,
   })
 );
@@ -35,7 +33,7 @@ app.get('/health', (req, res) => {
 });
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use((req, res) => {
   res.status(404).json({
     error: 'Route not found',
     message: `The requested route ${req.originalUrl} does not exist`,
@@ -46,10 +44,8 @@ app.use('*', (req, res) => {
 app.use(errorHandler);
 
 // Graceful shutdown
-// Listen to SIGINT or "signal interrupt" to gracefully shut down the server
 process.on('SIGINT', async () => {
   console.log('Shutting down gracefully...');
-  // Close the Prisma client connection and prevent database connection leaks
   await prisma.$disconnect();
   process.exit(0);
 });
