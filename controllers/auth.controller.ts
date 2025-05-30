@@ -144,13 +144,22 @@ export const login = async (
 };
 
 export const logout = (req: Request, res: Response): void => {
+  // no need to try/catch (cookie operations don't throw)
+    const token = req.cookies.token;
+  if(!token) {
+    res.status(400).json({
+      error: 'No active session',
+      message: 'You are not logged in or your session has expired'
+    });
+    return;
+  }
   res.clearCookie('token', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
+    path: '/', // Explicitly clear from all paths
   });
-  
-  res.json({ 
+  res.status(200).json({ 
     success: true,
     message: 'Logged out successfully' 
   });
