@@ -7,6 +7,10 @@ export interface JwtPayload {
   role: Role;
 }
 
+export interface passwordResetJwtPayload{
+  userId:number
+}
+
 
 export interface AuthenticatedRequest extends Request {
   user?: {

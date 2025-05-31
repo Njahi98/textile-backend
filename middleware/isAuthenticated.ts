@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
-import { AuthenticatedRequest } from '../types';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import { AuthenticatedRequest, JwtPayload } from '../types';
+import jwt from 'jsonwebtoken';
 import { prisma } from 'server';
 import { CustomError } from './errorHandler';
 export const isAuthenticated = async (req: AuthenticatedRequest,res: Response,next: NextFunction) => {

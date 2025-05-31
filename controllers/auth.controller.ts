@@ -2,8 +2,10 @@ import { NextFunction, Request, Response } from 'express';
 import { prisma } from '../server';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { RegisterRequest, LoginRequest } from '../utils/validation';
+import { RegisterRequest, LoginRequest, emailResetRequest, PasswordResetRequest } from '../utils/validation';
 import { CustomError } from '@/middleware/errorHandler';
+import { sendEmail } from '@/utils/email';
+import { AuthenticatedRequest, passwordResetJwtPayload } from '../types';
 
 if (!process.env.JWT_SECRET) {
   const error = new Error('JWT_SECRET is not configured') as CustomError;
@@ -37,7 +39,7 @@ export const register = async (
       return;
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await prisma.user.create({
       data: {
@@ -164,3 +166,84 @@ export const logout = (req: Request, res: Response): void => {
     message: 'Logged out successfully' 
   });
 };
+
+export const requestPasswordReset= async(req:Request,res:Response,next:NextFunction) => {
+  try {
+    const {email} :emailResetRequest = req.body;
+    const user = await prisma.user.findUnique({
+      where:{email},
+      select:{id:true}
+    })
+    if(!user){
+      res.status(404).json({error:'user not found',message:'user does not exist'})
+      return;
+    }
+    const token = jwt.sign(
+      { userId: user.id },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+    
+    const resetLink = `${process.env.FRONTEND_URL}/${user.id}/${token}`;
+    sendEmail({
+      to: email,
+      subject: 'Password Reset Request',
+      html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Password Reset Request</h2>
+        <p>Hello,</p>
+        <p>We received a request to reset your password. If you didn't make this request, you can safely ignore this email.</p>
+        <p>To reset your password, click the link below (valid for 1 hour):</p>
+        <p>
+        <a href="${resetLink}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">
+          Reset Password
+        </a>
+        </p>
+        <p>If the button doesn't work, copy and paste this link into your browser:</p>
+        <p>${resetLink}</p>
+        <p>For security reasons, this link will expire in 1 hour.</p>
+        <p>Best regards,<br>Your Application Team</p>
+      </div>
+      `
+    });
+    res.status(200).json({
+      success: true,
+      message: 'Password reset link sent to your email',
+      resetLink
+    });
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const resetPassword = async(req:AuthenticatedRequest,res:Response,next:NextFunction) => {
+try {
+  const token = req.params.token;
+  const password:PasswordResetRequest=req.body;
+  if(!token){
+    res.status(400).json({error:'bad request'});
+    return;
+  }
+  const decoded = jwt.verify(token,JWT_SECRET) as passwordResetJwtPayload;
+
+  const user = await prisma.user.findUnique({
+    where:{id:decoded.userId},
+    select:{id:true}
+  });
+  if(!user){
+    res.status(404).json({error:'user not found',message:'user does not exist'})
+    return;
+  }
+  const hashedPassword = await bcrypt.hash(password.password,10)
+  await prisma.user.update({
+    where:{id:user.id},
+    data:{password:hashedPassword}
+  });
+  res.status(200).json({
+    success: true,
+    message: 'Password reset successfully'
+  });
+} catch (error) {
+  next(error);
+}
+}
