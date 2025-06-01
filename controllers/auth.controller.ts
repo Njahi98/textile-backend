@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import { RegisterRequest, LoginRequest, emailResetRequest, PasswordResetRequest } from '../utils/validation';
 import { CustomError } from '@/middleware/errorHandler';
 import { sendEmail } from '@/utils/email';
-import { AuthenticatedRequest, passwordResetJwtPayload } from '../types';
+import { passwordResetJwtPayload } from '../types';
 
 if (!process.env.JWT_SECRET) {
   const error = new Error('JWT_SECRET is not configured') as CustomError;
@@ -167,25 +167,33 @@ export const logout = (req: Request, res: Response): void => {
   });
 };
 
-export const requestPasswordReset= async(req:Request,res:Response,next:NextFunction) => {
+export const requestPasswordReset = async(req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const {email} :emailResetRequest = req.body;
+    const { email }: emailResetRequest = req.body;
     const user = await prisma.user.findUnique({
-      where:{email},
-      select:{id:true}
-    })
-    if(!user){
-      res.status(404).json({error:'user not found',message:'user does not exist'})
+      where: { email },
+      select: { id: true }
+    });
+
+    // Always return success to prevent email enumeration
+    if (!user) {
+      res.status(200).json({
+        success: true,
+        message: 'If an account exists with this email, you will receive a password reset link'
+      });
       return;
     }
+
     const token = jwt.sign(
-      { userId: user.id },
+      //Added a purpose field to the JWT to prevent token reuse
+      { userId: user.id, purpose: 'password-reset' },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
     
-    const resetLink = `${process.env.FRONTEND_URL}/${user.id}/${token}`;
-    sendEmail({
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+    
+    await sendEmail({
       to: email,
       subject: 'Password Reset Request',
       html: `
@@ -206,44 +214,54 @@ export const requestPasswordReset= async(req:Request,res:Response,next:NextFunct
       </div>
       `
     });
+
     res.status(200).json({
       success: true,
-      message: 'Password reset link sent to your email',
-      resetLink
+      message: 'If an account exists with this email, you will receive a password reset link'
     });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
-export const resetPassword = async(req:AuthenticatedRequest,res:Response,next:NextFunction) => {
-try {
-  const token = req.params.token;
-  const password:PasswordResetRequest=req.body;
-  if(!token){
-    res.status(400).json({error:'bad request'});
-    return;
-  }
-  const decoded = jwt.verify(token,JWT_SECRET) as passwordResetJwtPayload;
+export const resetPassword = async(req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { token, password }: PasswordResetRequest = req.body;
 
-  const user = await prisma.user.findUnique({
-    where:{id:decoded.userId},
-    select:{id:true}
-  });
-  if(!user){
-    res.status(404).json({error:'user not found',message:'user does not exist'})
-    return;
+    const decoded = jwt.verify(token, JWT_SECRET) as passwordResetJwtPayload;
+    
+    if (decoded.purpose !== 'password-reset') {
+      res.status(400).json({
+        error: 'Invalid token',
+        message: 'Invalid reset token'
+      });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { id: true }
+    });
+
+    if (!user) {
+      res.status(400).json({
+        error: 'Invalid token',
+        message: 'Invalid reset token'
+      });
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successfully'
+    });
+  } catch (error) {
+    next(error);
   }
-  const hashedPassword = await bcrypt.hash(password.password,10)
-  await prisma.user.update({
-    where:{id:user.id},
-    data:{password:hashedPassword}
-  });
-  res.status(200).json({
-    success: true,
-    message: 'Password reset successfully'
-  });
-} catch (error) {
-  next(error);
-}
-}
+};

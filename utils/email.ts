@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { CustomError } from '@/middleware/errorHandler';
 
 interface EmailOptions {
   to: string;
@@ -15,9 +16,9 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export const sendEmail = async (options: EmailOptions) => {
+export const sendEmail = async (options: EmailOptions): Promise<void> => {
   try {
-    const info = await transporter.sendMail({
+    await transporter.sendMail({
       from: process.env.GOOGLE_APP_USER,
       to: options.to,
       subject: options.subject,
@@ -25,6 +26,9 @@ export const sendEmail = async (options: EmailOptions) => {
       html: options.html,
     });
   } catch (error) {
-    throw new Error('Failed to send email');
+    const customError = new Error('Failed to send email') as CustomError;
+    customError.statusCode = 500;
+    customError.message = 'Unable to send email. Please try again later.';
+    throw customError;
   }
 };
