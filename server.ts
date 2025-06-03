@@ -5,8 +5,9 @@ import { PrismaClient } from './generated/prisma';
 import authRoutes from './routes/auth';
 import { errorHandler } from './middleware/errorHandler';
 import cookieParser from 'cookie-parser';
+import { requestLogger } from './middleware/requestLogger';
 // import { apiLimiter, authLimiter } from './middleware/rateLimiter';
-import morgan from 'morgan';
+// import morgan from 'morgan';
 
 dotenv.config();
 
@@ -24,8 +25,9 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(requestLogger);
 // app.use(apiLimiter);
-app.use(morgan('dev'));
+// app.use(morgan('dev'));
 
 //Routes
 app.use('/api/auth',

@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import { RegisterRequest, LoginRequest, emailResetRequest, PasswordResetRequest } from '../utils/validation';
 import { CustomError } from '@/middleware/errorHandler';
 import { sendEmail } from '@/utils/email';
-import { passwordResetJwtPayload } from '../types';
+import { AuthenticatedRequest, passwordResetJwtPayload } from '../types';
 
 if (!process.env.JWT_SECRET) {
   const error = new Error('JWT_SECRET is not configured') as CustomError;
@@ -260,6 +260,25 @@ export const resetPassword = async(req: Request, res: Response, next: NextFuncti
     res.status(200).json({
       success: true,
       message: 'Password reset successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getCurrentUser = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User not authenticated'
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      user: req.user
     });
   } catch (error) {
     next(error);
