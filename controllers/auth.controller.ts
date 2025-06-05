@@ -57,7 +57,7 @@ export const register = async (
     });
 
     const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
+      { userId: user.id },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
@@ -118,7 +118,7 @@ export const login = async (
     }
 
     const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
+      { userId: user.id},
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );

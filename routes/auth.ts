@@ -13,7 +13,7 @@ router.post('/password-reset-request', validate(emailResetSchema), requestPasswo
 router.post('/password-reset', validate(passwordResetSchema), resetPassword);
 
 // Get current user on protected route
-router.get('/me', isAuthenticated, getCurrentUser)
+router.get('/me', isAuthenticated, getCurrentUser);
 
 
 export default router;
