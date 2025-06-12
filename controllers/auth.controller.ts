@@ -191,7 +191,7 @@ export const requestPasswordReset = async(req: Request, res: Response, next: Nex
       { expiresIn: '1h' }
     );
     
-    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+    const resetLink = `${process.env.FRONTEND_URL}/auth/reset-password?token=${token}`;
     
     await sendEmail({
       to: email,
