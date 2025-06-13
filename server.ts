@@ -2,11 +2,13 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { PrismaClient } from './generated/prisma';
-import authRoutes from './routes/auth';
 import { errorHandler } from './middleware/errorHandler';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 // import { apiLimiter, authLimiter } from './middleware/rateLimiter';
+
+import authRoutes from './routes/auth';
+// import userRoutes from './routes/user';
 
 dotenv.config();
 
@@ -31,7 +33,7 @@ app.use(morgan('dev'));
 app.use('/api/auth',
   // authLimiter,
    authRoutes);
-
+// app.use('/users',userRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
