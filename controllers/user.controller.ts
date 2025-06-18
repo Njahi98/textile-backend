@@ -1,12 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../server';
 import bcrypt from 'bcrypt';
-import { Role } from 'generated/prisma';
+import { Role, Status } from 'generated/prisma';
 
 interface CreateUserData {
   email: string;
   password: string;
-  name: string;
+  username: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
   role?: Role;
 }
 interface idParams{
@@ -15,9 +18,13 @@ interface idParams{
 
 interface UpdateUserData {
   email?: string;
-  name?: string;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
   role?: Role;
   password?: string;
+  status:Status
 }
 
 export const getAllUsers = async (
@@ -30,7 +37,11 @@ export const getAllUsers = async (
       select: {
         id: true,
         email: true,
-        name: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        status: true,
         role: true,
         createdAt: true,
         updatedAt: true,
@@ -66,7 +77,11 @@ export const getUserById = async (
       select: {
         id: true,
         email: true,
-        name: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        status: true,
         role: true,
         createdAt: true,
         updatedAt: true,
@@ -96,13 +111,13 @@ export const createUser = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { email, password, name, role } = req.body;
+    const { email, password, username, firstName, lastName, phone, role } = req.body;
 
-    const existingUser = await prisma.user.findUnique({
+    const existingUserByEmail = await prisma.user.findUnique({
       where: { email },
     });
 
-    if (existingUser) {
+    if (existingUserByEmail) {
       res.status(409).json({
         error: 'EMAIL_EXISTS',
         message: 'An account with this email already exists'
@@ -110,19 +125,52 @@ export const createUser = async (
       return;
     }
 
+    const existingUserByUsername = await prisma.user.findUnique({
+      where: { username },
+    });
+
+    if (existingUserByUsername) {
+      res.status(409).json({
+        error: 'USERNAME_EXISTS',
+        message: 'An account with this username already exists'
+      });
+      return;
+    }
+
+    if (phone) {
+      const existingUserByPhone = await prisma.user.findUnique({
+        where: { phone },
+      });
+
+      if (existingUserByPhone) {
+        res.status(409).json({
+          error: 'PHONE_EXISTS',
+          message: 'An account with this phone number already exists'
+        });
+        return;
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await prisma.user.create({
       data: {
         email,
-        name,
+        username,
         password: hashedPassword,
+        firstName: firstName || null,
+        lastName: lastName || null,
+        phone: phone || null,
         role: role || 'USER',
       },
       select: {
         id: true,
         email: true,
-        name: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        status: true,
         role: true,
         createdAt: true,
       },
@@ -153,7 +201,7 @@ export const updateUser = async (
       return;
     }
 
-    const { email, name, role, password } = req.body;
+    const { email, username, firstName, lastName, phone, role, password,status } = req.body;
 
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
@@ -167,6 +215,7 @@ export const updateUser = async (
       return;
     }
 
+    // Check if email already exists (if being updated)
     if (email && email !== existingUser.email) {
       const emailExists = await prisma.user.findUnique({
         where: { email },
@@ -181,10 +230,44 @@ export const updateUser = async (
       }
     }
 
+    // Check if username already exists (if being updated)
+    if (username && username !== existingUser.username) {
+      const usernameExists = await prisma.user.findUnique({
+        where: { username },
+      });
+
+      if (usernameExists) {
+        res.status(409).json({
+          error: 'USERNAME_EXISTS',
+          message: 'This username is already in use'
+        });
+        return;
+      }
+    }
+
+    // Check if phone already exists (if being updated)
+    if (phone && phone !== existingUser.phone) {
+      const phoneExists = await prisma.user.findUnique({
+        where: { phone },
+      });
+
+      if (phoneExists) {
+        res.status(409).json({
+          error: 'PHONE_EXISTS',
+          message: 'This phone number is already in use'
+        });
+        return;
+      }
+    }
+
     const updateData: any = {};
     if (email) updateData.email = email;
-    if (name) updateData.name = name;
+    if (username) updateData.username = username;
+    if (firstName !== undefined) updateData.firstName = firstName || null;
+    if (lastName !== undefined) updateData.lastName = lastName || null;
+    if (phone !== undefined) updateData.phone = phone || null;
     if (role) updateData.role = role;
+    if (status) updateData.status = status;
     if (password) {
       updateData.password = await bcrypt.hash(password, 10);
     }
@@ -195,7 +278,11 @@ export const updateUser = async (
       select: {
         id: true,
         email: true,
-        name: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        status: true,
         role: true,
         createdAt: true,
         updatedAt: true,

@@ -65,7 +65,7 @@ export const isAuthenticated = async (
     select: {
       id: true,
       email: true,
-      name: true,
+      username: true,
       role: true,
     },
   });

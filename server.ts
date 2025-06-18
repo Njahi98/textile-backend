@@ -33,7 +33,7 @@ app.use(morgan('dev'));
 app.use('/api/auth',
   // authLimiter,
    authRoutes);
-app.use('/users',userRoutes);
+app.use('/api/users',userRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

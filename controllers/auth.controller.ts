@@ -24,7 +24,7 @@ export const register = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { email, password, name }: RegisterRequest = req.body;
+    const { email, password, username }: RegisterRequest = req.body;
 
     const existingUser = await prisma.user.findUnique({
       where: { email },
@@ -44,13 +44,13 @@ export const register = async (
     const user = await prisma.user.create({
       data: {
         email,
-        name,
+        username,
         password: hashedPassword,
       },
       select: {
         id: true,
         email: true,
-        name: true,
+        username: true,
         role: true,
         createdAt: true,
       },
@@ -92,9 +92,10 @@ export const login = async (
       select: {
         id: true,
         email: true,
-        name: true,
+        username: true,
         password: true,
         role: true,
+        status: true,
         createdAt: true,
       },
     });
@@ -113,6 +114,14 @@ export const login = async (
       res.status(401).json({ 
         error: 'Invalid credentials',
         message: 'Email or password is incorrect'
+      });
+      return;
+    }
+
+    if (user.status !== 'active') {
+      res.status(403).json({
+        error: 'AccountInactive',
+        message: 'Your account is currently ' + user.status + ' and cannot be accessed.'
       });
       return;
     }
@@ -136,7 +145,7 @@ export const login = async (
       user: {
         id: user.id,
         email: user.email,
-        name: user.name,
+        username: user.username,
         role: user.role,
       },
     });
