@@ -9,10 +9,37 @@ const passwordSchema = z
     'Password must contain at least one uppercase letter, one lowercase letter, and one number'
   );
 
+const roleSchema = z.enum(['USER', 'ADMIN', 'SUPERADMIN']).optional();
+const statusSchema = z.enum(['active', 'inactive', 'suspended']).optional();
+
 export const registerSchema = z.object({
   email: z.string().email('Invalid email format').trim().toLowerCase(),
   password: passwordSchema,
   username: z.string().min(1, 'Username is required').trim(),
+});
+
+// User creation (admin)
+export const createUserSchema = z.object({
+  email: z.string().email('Invalid email format').trim().toLowerCase(),
+  password: passwordSchema,
+  username: z.string().min(1, 'Username is required').trim(),
+  firstName: z.string().optional().nullable(),
+  lastName: z.string().optional().nullable(),
+  phone: z.string().optional().nullable(),
+  role: roleSchema,
+  status: statusSchema,
+});
+
+// User update (admin, all fields optional)
+export const updateUserSchema = z.object({
+  email: z.string().email('Invalid email format').trim().toLowerCase().optional(),
+  password: passwordSchema.optional(),
+  username: z.string().min(1, 'Username is required').trim().optional(),
+  firstName: z.string().optional().nullable(),
+  lastName: z.string().optional().nullable(),
+  phone: z.string().optional().nullable(),
+  role: roleSchema,
+  status: statusSchema,
 });
 
 export const loginSchema = z.object({
