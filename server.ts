@@ -9,6 +9,7 @@ import morgan from 'morgan';
 
 import authRoutes from './routes/auth';
 import userRoutes from './routes/user';
+import workerRoutes from './routes/worker';
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.use('/api/auth',
   // authLimiter,
    authRoutes);
 app.use('/api/users',userRoutes);
+app.use('/api/workers',workerRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

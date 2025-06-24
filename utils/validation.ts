@@ -60,3 +60,13 @@ export type RegisterRequest = z.infer<typeof registerSchema>;
 export type LoginRequest = z.infer<typeof loginSchema>;
 export type emailResetRequest = z.infer<typeof emailResetSchema>;
 export type PasswordResetRequest = z.infer<typeof passwordResetSchema>;
+
+
+export const workerCreateSchema = z.object({
+  name:z.string().min(1,'Name is required'),
+  role:z.string().min(1,'Role is required').optional(),
+})
+export const workerUpdateSchema = z.object({
+  name:z.string().min(1,'Name is required').optional(),
+  role:z.string().min(1,'Role is required').optional(),
+})
