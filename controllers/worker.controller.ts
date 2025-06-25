@@ -7,6 +7,10 @@ interface UpdateWorkerData {
   name?: string;
 }
 
+interface idParams {
+  id: string;
+}
+
 export const getAllWorkers = async (
   req: Request,
   res: Response,
@@ -18,13 +22,80 @@ export const getAllWorkers = async (
         id: true,
         name: true,
         role: true,
-        assignments: true,
-        performanceRecords: true,
         createdAt: true,
         updatedAt: true,
+        _count: {
+          select: {
+            assignments: true,
+            performanceRecords: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
     res.json({ success: true, workers });
+    return;
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getWorkerById = async (
+  req: Request<idParams>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const workerId = parseInt(req.params.id);
+
+    if (isNaN(workerId)) {
+      res.status(400).json({
+        error: 'INVALID_ID',
+        message: 'Invalid worker ID provided',
+      });
+      return;
+    }
+
+    const worker = await prisma.worker.findUnique({
+      where: { id: workerId },
+      select: {
+        id: true,
+        name: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            assignments: true,
+            performanceRecords: true,
+          },
+        },
+        assignments: {
+          include: {
+            productionLine: true,
+          },
+          orderBy: { date: 'desc' },
+          take: 20,
+        },
+        performanceRecords: {
+          orderBy: { date: 'desc' },
+          take: 50,
+        },
+      },
+    });
+    
+
+    if (!worker) {
+      res.status(404).json({
+        error: 'WORKER_NOT_FOUND',
+        message: 'Worker not found',
+      });
+      return;
+    }
+
+    res.json({ success: true, worker });
     return;
   } catch (error) {
     next(error);
