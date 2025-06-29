@@ -5,6 +5,9 @@ import { prisma } from 'server';
 interface UpdateWorkerData {
   role?: string;
   name?: string;
+  cin?:string;
+  phone?:string;
+  email?:string
 }
 
 interface idParams {
@@ -21,6 +24,9 @@ export const getAllWorkers = async (
       select: {
         id: true,
         name: true,
+        cin:true,
+        email:true,
+        phone:true,
         role: true,
         createdAt: true,
         updatedAt: true,
@@ -63,6 +69,9 @@ export const getWorkerById = async (
       select: {
         id: true,
         name: true,
+        cin:true,
+        email:true,
+        phone:true,
         role: true,
         createdAt: true,
         updatedAt: true,
@@ -108,16 +117,65 @@ export const createWorker = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { name, role } = req.body;
+    const { name,role,cin,phone,email } = req.body;
+    
+    if (cin) {
+      const cinExists = await prisma.worker.findUnique({
+        where: { cin },
+      });
+
+      if (cinExists) {
+        res.status(409).json({
+          error: 'CIN_EXISTS',
+          message: 'This CIN is already in use'
+        });
+        return;
+      }
+    }
+
+    if (email) {
+      const emailExists = await prisma.worker.findUnique({
+        where: { email },
+      });
+
+      if (emailExists) {
+        res.status(409).json({
+          error: 'EMAIL_EXISTS',
+          message: 'This email is already in use'
+        });
+        return;
+      }
+    }
+
+    if (phone) {
+      const phoneExists = await prisma.worker.findUnique({
+        where: { phone },
+      });
+
+      if (phoneExists) {
+        res.status(409).json({
+          error: 'PHONE_EXISTS',
+          message: 'This phone number is already in use'
+        });
+        return;
+      }
+    }
+
     const worker = await prisma.worker.create({
       data: {
         name,
+        cin,
+        phone,
+        email,
         role,
       },
       select: {
         id: true,
         name: true,
         role: true,
+        cin:true,
+        email:true,
+        phone:true,
         createdAt: true,
         updatedAt: true,
       },
@@ -147,7 +205,7 @@ export const updateWorker = async (
       });
       return;
     }
-    const { name, role } = req.body;
+    const { name, role,cin,phone,email } = req.body;
     const existingWorker = await prisma.worker.findUnique({
       where: {
         id: workerId,
@@ -160,9 +218,56 @@ export const updateWorker = async (
       });
       return;
     }
+
+    if (cin && cin !== existingWorker.cin) {
+      const cinExists = await prisma.worker.findUnique({
+        where: { cin },
+      });
+
+      if (cinExists) {
+        res.status(409).json({
+          error: 'CIN_EXISTS',
+          message: 'This cin is already in use'
+        });
+        return;
+      }
+    }
+
+    if (email && email !== existingWorker.email) {
+      const emailExists = await prisma.worker.findUnique({
+        where: { email },
+      });
+
+      if (emailExists) {
+        res.status(409).json({
+          error: 'EMAIL_EXISTS',
+          message: 'This email is already in use'
+        });
+        return;
+      }
+    }
+
+    if (phone && phone !== existingWorker.phone) {
+      const phoneExists = await prisma.worker.findUnique({
+        where: { phone },
+      });
+
+      if (phoneExists) {
+        res.status(409).json({
+          error: 'PHONE_EXISTS',
+          message: 'This phone number is already in use'
+        });
+        return;
+      }
+    }
+
+
     const updatedData: any = {};
     if (name) updatedData.name = name;
-    if (role) updatedData.role = role;
+    if (email !== undefined) updatedData.email = email || null;
+    if (phone !== undefined) updatedData.phone = phone || null;
+    if (cin) updatedData.cin = cin;
+    if (role !== undefined) updatedData.role = role || null;
 
     const updatedWorker = await prisma.worker.update({
       where: { id: workerId },
@@ -171,6 +276,11 @@ export const updateWorker = async (
         id: true,
         name: true,
         role: true,
+        cin :true,
+        email:true,
+        phone:true,
+        createdAt:true,
+        updatedAt:true,
       },
     });
     res.json({

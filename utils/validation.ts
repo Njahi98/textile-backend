@@ -9,6 +9,11 @@ const passwordSchema = z
     'Password must contain at least one uppercase letter, one lowercase letter, and one number'
   );
 
+  const cinSchema = z.string().regex(/^\d{8}$/, {
+    message: "CIN must be exactly 8 digits",
+  });
+  
+
 const roleSchema = z.enum(['USER', 'ADMIN', 'SUPERADMIN']).optional();
 const statusSchema = z.enum(['active', 'inactive', 'suspended']).optional();
 
@@ -64,9 +69,15 @@ export type PasswordResetRequest = z.infer<typeof passwordResetSchema>;
 
 export const workerCreateSchema = z.object({
   name:z.string().min(1,'Name is required'),
+  cin: cinSchema,
+  email: z.string().email('Invalid email format').trim().toLowerCase().optional().nullable(),
+  phone: z.string().optional().nullable(),
   role:z.string().min(1,'Role is required').optional(),
 })
 export const workerUpdateSchema = z.object({
   name:z.string().min(1,'Name is required').optional(),
+  cin: cinSchema.optional(),
   role:z.string().min(1,'Role is required').optional(),
+  phone: z.string().optional().nullable(),
+  email: z.string().email('Invalid email format').trim().toLowerCase().optional(),
 })
