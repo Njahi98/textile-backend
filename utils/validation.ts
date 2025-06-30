@@ -81,3 +81,23 @@ export const workerUpdateSchema = z.object({
   phone: z.string().optional().nullable(),
   email: z.string().email('Invalid email format').trim().toLowerCase().optional(),
 })
+
+export const createProductionLineSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().optional().nullable(),
+  capacity: z.number().int().positive('Capacity must be a positive integer').optional().nullable(),
+  targetOutput: z.number().int().positive('Target output must be a positive integer').optional().nullable(),
+  location: z.string().optional().nullable(),
+});
+
+export const updateProductionLineSchema = z.object({
+  name: z.string().min(1, 'Name is required').optional(),
+  description: z.string().optional().nullable(),
+  capacity: z.number().int().positive('Capacity must be a positive integer').optional().nullable(),
+  targetOutput: z.number().int().positive('Target output must be a positive integer').optional().nullable(),
+  location: z.string().optional().nullable(),
+  isActive: z.boolean().optional(),
+});
+
+export type CreateProductionLineInput = z.infer<typeof createProductionLineSchema>;
+export type UpdateProductionLineInput = z.infer<typeof updateProductionLineSchema>;

@@ -46,7 +46,7 @@ model Worker {
   cin                String              @unique
   phone              String?             @unique
   email              String?             @unique
-  role               String?             // example: "operator", "supervisor"
+  role               String? // example: "operator", "supervisor"
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   assignments        Assignment[]
@@ -54,13 +54,16 @@ model Worker {
 }
 
 model ProductionLine {
-  id          Int          @id @default(autoincrement())
-  name        String
-  description String?
-  capacity    Int?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  assignments Assignment[]
+  id           Int          @id @default(autoincrement())
+  name         String
+  description  String?
+  capacity     Int?
+  isActive     Boolean      @default(true)
+  targetOutput Int?
+  location     String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  assignments  Assignment[]
 }
 
 model Assignment {
