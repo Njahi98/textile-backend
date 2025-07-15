@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { truncate } from 'fs';
 import { prisma } from 'server';
+import { parse } from 'csv-parse/sync';
+
 
 interface UpdateWorkerData {
   role?: string;
@@ -12,6 +13,15 @@ interface UpdateWorkerData {
 
 interface idParams {
   id: string;
+}
+
+interface WorkerCSVRow {
+  name: string;
+  cin: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  [key: string]: any;
 }
 
 export const getAllWorkers = async (
@@ -326,6 +336,181 @@ export const deleteWorker = async (
       success: true,
       message: 'Worker deleted successfully',
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const importWorkers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.file) {
+      res.status(400).json({
+        error: 'NO_FILE',
+        message: 'No file uploaded',
+      });
+      return;
+    }
+
+    const csvData = req.file.buffer.toString('utf-8');
+    
+    // Parse CSV data
+    let records: WorkerCSVRow[];
+    try {
+      records = parse(csvData, {
+        columns: true,
+        skip_empty_lines: true,
+        trim: true,
+      }) as WorkerCSVRow[];
+    } catch (parseError) {
+      res.status(400).json({
+        error: 'INVALID_CSV',
+        message: 'Invalid CSV format',
+      });
+      return;
+    }
+
+    if (!records || records.length === 0) {
+      res.status(400).json({
+        error: 'EMPTY_CSV',
+        message: 'CSV file is empty',
+      });
+      return;
+    }
+
+    // Validate required columns
+    const requiredColumns = ['name', 'cin'];
+    const firstRecord = records[0];
+    if (!firstRecord) {
+      res.status(400).json({
+        error: 'EMPTY_CSV',
+        message: 'CSV file is empty',
+      });
+      return;
+    }
+    const csvColumns = Object.keys(firstRecord);
+    const missingColumns = requiredColumns.filter(col => !csvColumns.includes(col));
+    if (missingColumns.length > 0) {
+      res.status(400).json({
+        error: 'MISSING_COLUMNS',
+        message: `Missing required columns: ${missingColumns.join(', ')}`,
+      });
+      return;
+    }
+
+    const results = {
+      success: [] as any[],
+      errors: [] as any[],
+      total: records.length,
+    };
+
+    // Process each record
+    for (let i = 0; i < records.length; i++) {
+      const record = records[i];
+      if (!record) continue;
+      const rowNumber = i + 2; // +2 because CSV row numbers start at 1 and we skip header
+
+      try {
+        // Validate required fields
+        if (!record.name || !record.cin) {
+          results.errors.push({
+            row: rowNumber,
+            data: record,
+            error: 'Missing required fields (name, cin)',
+          });
+          continue;
+        }
+
+        // Check for existing CIN
+        const existingCin = await prisma.worker.findUnique({
+          where: { cin: record.cin },
+        });
+
+        if (existingCin) {
+          results.errors.push({
+            row: rowNumber,
+            data: record,
+            error: `CIN ${record.cin} already exists`,
+          });
+          continue;
+        }
+
+        // Check for existing email if provided
+        if (record.email) {
+          const existingEmail = await prisma.worker.findUnique({
+            where: { email: record.email },
+          });
+
+          if (existingEmail) {
+            results.errors.push({
+              row: rowNumber,
+              data: record,
+              error: `Email ${record.email} already exists`,
+            });
+            continue;
+          }
+        }
+
+        // Check for existing phone if provided
+        if (record.phone) {
+          const existingPhone = await prisma.worker.findUnique({
+            where: { phone: record.phone },
+          });
+
+          if (existingPhone) {
+            results.errors.push({
+              row: rowNumber,
+              data: record,
+              error: `Phone ${record.phone} already exists`,
+            });
+            continue;
+          }
+        }
+
+        // Create worker
+        const worker = await prisma.worker.create({
+          data: {
+            name: record.name,
+            cin: record.cin,
+            email: record.email || null,
+            phone: record.phone || null,
+            role: record.role || null,
+          },
+          select: {
+            id: true,
+            name: true,
+            cin: true,
+            email: true,
+            phone: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        });
+
+        results.success.push({
+          row: rowNumber,
+          worker,
+        });
+
+      } catch (error) {
+        results.errors.push({
+          row: rowNumber,
+          data: record,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Import completed. ${results.success.length} workers imported, ${results.errors.length} errors`,
+      results,
+    });
+
   } catch (error) {
     next(error);
   }
