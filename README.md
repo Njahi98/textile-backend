@@ -37,8 +37,11 @@ Add these to your `.env` file:
 
 - `DATABASE_URL` – PostgreSQL connection string
 - `FRONTEND_URL` – Allowed CORS origin (e.g., http://localhost:3000)
+- `PORT` – Server listening port (e.g., `5000`)
 - `JWT_SECRET` – Secret for JWT authentication
 - `NODE_ENV` – Set to `production` in production environments
 - `GOOGLE_APP_USER` – Google account email for sending password reset emails
 - `GOOGLE_APP_PASSWORD` – Google app password for sending password reset emails
 
+###  Frontend
+See [`Textile Frontend`](https://github.com/Njahi98/textile-frontend) for frontend setup and API details.
