@@ -5,12 +5,13 @@ import { PrismaClient } from './generated/prisma';
 import { errorHandler } from './middleware/errorHandler';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
-// import { apiLimiter, authLimiter } from './middleware/rateLimiter';
+import { apiLimiter, authLimiter } from './middleware/rateLimiter';
 
 import authRoutes from './routes/auth';
 import userRoutes from './routes/user';
 import workerRoutes from './routes/worker';
 import productionLineRoutes from './routes/productionLine';
+import assignmentRoutes from './routes/assignment';
 
 dotenv.config();
 
@@ -28,16 +29,22 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-// app.use(apiLimiter);
+
+// Apply rate limiting only in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(apiLimiter);
+}
+
 app.use(morgan('dev'));
 
 //Routes
 app.use('/api/auth',
-  // authLimiter,
-   authRoutes);
+  process.env.NODE_ENV === 'production' ? authLimiter : [],
+  authRoutes);
 app.use('/api/users',userRoutes);
 app.use('/api/workers',workerRoutes);
 app.use('/api/production-lines', productionLineRoutes);
+app.use('/api/assignments', assignmentRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

@@ -101,3 +101,53 @@ export const updateProductionLineSchema = z.object({
 
 export type CreateProductionLineInput = z.infer<typeof createProductionLineSchema>;
 export type UpdateProductionLineInput = z.infer<typeof updateProductionLineSchema>;
+
+const shiftSchema = z.enum(['morning', 'afternoon', 'night'], {
+  errorMap: () => ({ message: 'Shift must be morning, afternoon, or night' })
+});
+
+export const createAssignmentSchema = z.object({
+  workerId: z.number().int().positive('Worker ID must be a positive integer'),
+  productionLineId: z.number().int().positive('Production line ID must be a positive integer'),
+  position: z.string().min(1, 'Position is required'),
+  date: z.coerce.date({
+    errorMap: () => ({ message: 'Invalid date format' })
+  }),
+  shift: shiftSchema,
+});
+
+export const updateAssignmentSchema = z.object({
+  workerId: z.number().int().positive('Worker ID must be a positive integer').optional(),
+  productionLineId: z.number().int().positive('Production line ID must be a positive integer').optional(),
+  position: z.string().min(1, 'Position is required').optional(),
+  date: z.coerce.date({
+    errorMap: () => ({ message: 'Invalid date format' })
+  }).optional(),
+  shift: shiftSchema.optional(),
+});
+
+
+// Date range query schema
+export const assignmentQuerySchema = z.object({
+  startDate: z.coerce.date().optional(),
+  endDate: z.coerce.date().optional(),
+  workerId: z.coerce.number().int().positive().optional(),
+  productionLineId: z.coerce.number().int().positive().optional(),
+  shift: shiftSchema.optional(),
+  position: z.string().optional(),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+});
+
+// Calendar view query schema
+export const calendarQuerySchema = z.object({
+  year: z.coerce.number().int().min(2020).max(2030),
+  month: z.coerce.number().int().min(1).max(12),
+  workerId: z.coerce.number().int().positive().optional(),
+  productionLineId: z.coerce.number().int().positive().optional(),
+});
+
+export type CreateAssignmentInput = z.infer<typeof createAssignmentSchema>;
+export type UpdateAssignmentInput = z.infer<typeof updateAssignmentSchema>;
+export type AssignmentQueryInput = z.infer<typeof assignmentQuerySchema>;
+export type CalendarQueryInput = z.infer<typeof calendarQuerySchema>;
