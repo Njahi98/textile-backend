@@ -64,6 +64,7 @@ model ProductionLine {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
   assignments  Assignment[]
+  performanceRecords PerformanceRecord[]
 }
 
 model Assignment {
@@ -82,17 +83,36 @@ model Assignment {
   @@index([workerId, date])
 }
 
+model Product {
+  id                 Int                 @id @default(autoincrement())
+  name               String
+  code               String              @unique // SKU or product code
+  description        String?
+  category           String? // e.g., "shirts", "pants", "fabric"
+  unitPrice          Float?
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  performanceRecords PerformanceRecord[]
+}
+
 model PerformanceRecord {
-  id         Int      @id @default(autoincrement())
-  workerId   Int
-  date       DateTime
-  piecesMade Int
-  shift      String?
-  timeTaken  Float // in hours or minutes
-  errorRate  Float // percentage
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  worker     Worker   @relation(fields: [workerId], references: [id])
+  id               Int            @id @default(autoincrement())
+  workerId         Int
+  productId        Int
+  productionLineId Int
+  date             DateTime
+  piecesMade       Int
+  shift            String?
+  timeTaken        Float // in hours or minutes
+  errorRate        Float // percentage
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  worker           Worker         @relation(fields: [workerId], references: [id])
+  product          Product        @relation(fields: [productId], references: [id])
+  productionLine   ProductionLine @relation(fields: [productionLineId], references: [id])
 
   @@index([workerId, date])
+  @@index([productId, date])
+  @@index([productionLineId, date])
 }

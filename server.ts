@@ -12,6 +12,7 @@ import userRoutes from './routes/user';
 import workerRoutes from './routes/worker';
 import productionLineRoutes from './routes/productionLine';
 import assignmentRoutes from './routes/assignment';
+import productRoutes from './routes/product';
 
 dotenv.config();
 
@@ -45,6 +46,7 @@ app.use('/api/users',userRoutes);
 app.use('/api/workers',workerRoutes);
 app.use('/api/production-lines', productionLineRoutes);
 app.use('/api/assignments', assignmentRoutes);
+app.use('/api/products', productRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

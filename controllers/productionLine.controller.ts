@@ -14,6 +14,11 @@ export const getAllProductionLines = async (req: Request, res: Response, next: N
         assignments: {
           include: { worker: true },
         },
+        performanceRecords: {
+          include: { product: true },
+          orderBy: { date: 'desc' },
+          take: 10,
+        },
       },
       orderBy: { name: 'asc' },
     });
@@ -35,17 +40,7 @@ export const getAllProductionLines = async (req: Request, res: Response, next: N
         const dailyOutput = await prisma.performanceRecord.aggregate({
           _sum: { piecesMade: true },
           where: {
-            worker: {
-              assignments: {
-                some: {
-                  productionLineId: line.id,
-                  date: {
-                    gte: today,
-                    lt: tomorrow,
-                  },
-                },
-              },
-            },
+            productionLineId: line.id,
             date: {
               gte: today,
               lt: tomorrow,
@@ -56,17 +51,7 @@ export const getAllProductionLines = async (req: Request, res: Response, next: N
         const perfMetrics = await prisma.performanceRecord.aggregate({
           _avg: { errorRate: true, timeTaken: true },
           where: {
-            worker: {
-              assignments: {
-                some: {
-                  productionLineId: line.id,
-                  date: {
-                    gte: today,
-                    lt: tomorrow,
-                  },
-                },
-              },
-            },
+            productionLineId: line.id,
             date: {
               gte: today,
               lt: tomorrow,
@@ -105,6 +90,11 @@ export const getProductionLineById = async (req: Request<{ id: string }>, res: R
           orderBy: { date: 'desc' },
           take: 50,
         },
+        performanceRecords: {
+          include: { product: true, worker: true },
+          orderBy: { date: 'desc' },
+          take: 50,
+        },
       },
     });
     if (!line) {
@@ -128,17 +118,7 @@ export const getProductionLineById = async (req: Request<{ id: string }>, res: R
     const dailyOutput = await prisma.performanceRecord.aggregate({
       _sum: { piecesMade: true },
       where: {
-        worker: {
-          assignments: {
-            some: {
-              productionLineId: id,
-              date: {
-                gte: today,
-                lt: tomorrow,
-              },
-            },
-          },
-        },
+        productionLineId: id,
         date: {
           gte: today,
           lt: tomorrow,
@@ -148,17 +128,7 @@ export const getProductionLineById = async (req: Request<{ id: string }>, res: R
     const perfMetrics = await prisma.performanceRecord.aggregate({
       _avg: { errorRate: true, timeTaken: true },
       where: {
-        worker: {
-          assignments: {
-            some: {
-              productionLineId: id,
-              date: {
-                gte: today,
-                lt: tomorrow,
-              },
-            },
-          },
-        },
+        productionLineId: id,
         date: {
           gte: today,
           lt: tomorrow,
