@@ -12,6 +12,7 @@ import {
   deleteProductImage,
   toggleProductStatus,
 } from '../controllers/product.controller';
+import { imageUploadLimiter } from '../middleware/rateLimiter';
 
 const router = express.Router();
 
@@ -22,6 +23,7 @@ router.get('/:id', getProductById);
 
 // Create product with optional image
 router.post('/', 
+  process.env.NODE_ENV === 'production' ? imageUploadLimiter : [],
   uploadSingle, 
   validate(createProductSchema), 
   createProduct
@@ -29,18 +31,17 @@ router.post('/',
 
 // Update product with optional image
 router.put('/:id', 
+  process.env.NODE_ENV === 'production' ? imageUploadLimiter : [],
   uploadSingle, 
   validate(updateProductSchema), 
   updateProduct
 );
 
-// Toggle product active/inactive status
 router.patch('/:id/toggle-status', toggleProductStatus);
 
 // Delete product image only
 router.delete('/:id/image', deleteProductImage);
 
-// Delete entire product
 router.delete('/:id', deleteProduct);
 
 export default router;
