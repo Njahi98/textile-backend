@@ -157,7 +157,7 @@ export const createProductSchema = z.object({
   code: z.string().min(1, 'Product code is required'),
   description: z.string().optional().nullable(),
   category: z.string().optional().nullable(),
-  unitPrice: z.number().positive('Unit price must be positive').optional().nullable(),
+  unitPrice: z.coerce.number().positive('Unit price must be positive').optional().nullable(),
 });
 
 export const updateProductSchema = z.object({
@@ -165,7 +165,7 @@ export const updateProductSchema = z.object({
   code: z.string().min(1, 'Product code is required').optional(),
   description: z.string().optional().nullable(),
   category: z.string().optional().nullable(),
-  unitPrice: z.number().positive('Unit price must be positive').optional().nullable(),
+  unitPrice: z.coerce.number().positive('Unit price must be positive').optional().nullable(),
   isActive: z.boolean().optional(),
 });
 

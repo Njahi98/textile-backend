@@ -90,6 +90,8 @@ model Product {
   description        String?
   category           String? // e.g., "shirts", "pants", "fabric"
   unitPrice          Float?
+  imageUrl           String? // Cloudinary image URL
+  imagePublicId      String? // Cloudinary public_id for management
   isActive           Boolean             @default(true)
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
