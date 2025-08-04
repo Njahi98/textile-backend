@@ -171,3 +171,45 @@ export const updateProductSchema = z.object({
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
+
+
+export const createPerformanceRecordSchema = z.object({
+  workerId: z.number().int().positive('Worker ID must be a positive integer'),
+  productId: z.number().int().positive('Product ID must be a positive integer'),
+  productionLineId: z.number().int().positive('Production line ID must be a positive integer'),
+  date: z.coerce.date({
+    errorMap: () => ({ message: 'Invalid date format' })
+  }),
+  piecesMade: z.number().int().min(0, 'Pieces made must be non-negative'),
+  shift: shiftSchema.optional(),
+  timeTaken: z.number().min(0, 'Time taken must be non-negative'),
+  errorRate: z.number().min(0, 'Error rate must be non-negative').max(100, 'Error rate cannot exceed 100%'),
+});
+
+export const updatePerformanceRecordSchema = z.object({
+  workerId: z.number().int().positive('Worker ID must be a positive integer').optional(),
+  productId: z.number().int().positive('Product ID must be a positive integer').optional(),
+  productionLineId: z.number().int().positive('Production line ID must be a positive integer').optional(),
+  date: z.coerce.date({
+    errorMap: () => ({ message: 'Invalid date format' })
+  }).optional(),
+  piecesMade: z.number().int().min(0, 'Pieces made must be non-negative').optional(),
+  shift: shiftSchema.optional(),
+  timeTaken: z.number().min(0, 'Time taken must be non-negative').optional(),
+  errorRate: z.number().min(0, 'Error rate must be non-negative').max(100, 'Error rate cannot exceed 100%').optional(),
+});
+
+export const performanceRecordQuerySchema = z.object({
+  startDate: z.coerce.date().optional(),
+  endDate: z.coerce.date().optional(),
+  workerId: z.coerce.number().int().positive().optional(),
+  productId: z.coerce.number().int().positive().optional(),
+  productionLineId: z.coerce.number().int().positive().optional(),
+  shift: shiftSchema.optional(),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+});
+
+export type CreatePerformanceRecordInput = z.infer<typeof createPerformanceRecordSchema>;
+export type UpdatePerformanceRecordInput = z.infer<typeof updatePerformanceRecordSchema>;
+export type PerformanceRecordQueryInput = z.infer<typeof performanceRecordQuerySchema>;
