@@ -532,7 +532,6 @@ export const deletePerformanceRecord = async (
   }
 };
 
-// Get performance analytics
 export const getPerformanceAnalytics = async (
   req: Request<{}, {}, {}, { 
     startDate?: string; 
@@ -601,20 +600,14 @@ export const getPerformanceAnalytics = async (
 
     switch (groupBy) {
       case 'worker':
-        groupedData = await prisma.$queryRaw`
-          SELECT 
-            "workerId",
-            SUM("piecesMade") as total_pieces,
-            AVG("errorRate") as avg_error_rate,
-            AVG("timeTaken") as avg_time_taken,
-            COUNT(*) as record_count
-          FROM "PerformanceRecord"
-          WHERE date >= ${start} AND date <= ${end}
-          ${workerId ? prisma.$queryRaw`AND "workerId" = ${parseInt(workerId)}` : prisma.$queryRaw``}
-          ${productionLineId ? prisma.$queryRaw`AND "productionLineId" = ${parseInt(productionLineId)}` : prisma.$queryRaw``}
-          GROUP BY "workerId"
-        `;
-        
+        groupedData = await prisma.performanceRecord.groupBy({
+          by: ['workerId'],
+          where,
+          _sum: { piecesMade: true },
+          _avg: { errorRate: true, timeTaken: true },
+          _count: true,
+        });
+
         // Add worker details
         for (let i = 0; i < groupedData.length; i++) {
           const worker = await prisma.worker.findUnique({
@@ -626,109 +619,92 @@ export const getPerformanceAnalytics = async (
         break;
 
       case 'product':
-        groupedData = await prisma.$queryRaw`
-          SELECT 
-            "productId",
-            SUM("piecesMade") as total_pieces,
-            AVG("errorRate") as avg_error_rate,
-            AVG("timeTaken") as avg_time_taken,
-            COUNT(*) as record_count
-          FROM "PerformanceRecord"
-          WHERE date >= ${start} AND date <= ${end}
-          ${workerId ? prisma.$queryRaw`AND "workerId" = ${parseInt(workerId)}` : prisma.$queryRaw``}
-          ${productionLineId ? prisma.$queryRaw`AND "productionLineId" = ${parseInt(productionLineId)}` : prisma.$queryRaw``}
-          GROUP BY "productId"
-        `;
-        
+        groupedData = await prisma.performanceRecord.groupBy({
+          by: ['productId'],
+          where,
+          _sum: { piecesMade: true },
+          _avg: { errorRate: true, timeTaken: true },
+          _count: true,
+        });
+
         // Add product details
-        for (const record of groupedData) {
+        for (let i = 0; i < groupedData.length; i++) {
           const product = await prisma.product.findUnique({
-            where: { id: record.productid }, // Note: SQL returns lowercase column names
+            where: { id: groupedData[i].productId },
             select: { id: true, name: true, code: true, category: true }
           });
-          record.product = product;
+          groupedData[i].product = product;
         }
         break;
 
       case 'productionLine':
-        groupedData = await prisma.$queryRaw`
-          SELECT 
-            "productionLineId",
-            SUM("piecesMade") as total_pieces,
-            AVG("errorRate") as avg_error_rate,
-            AVG("timeTaken") as avg_time_taken,
-            COUNT(*) as record_count
-          FROM "PerformanceRecord"
-          WHERE date >= ${start} AND date <= ${end}
-          ${workerId ? prisma.$queryRaw`AND "workerId" = ${parseInt(workerId)}` : prisma.$queryRaw``}
-          ${productionLineId ? prisma.$queryRaw`AND "productionLineId" = ${parseInt(productionLineId)}` : prisma.$queryRaw``}
-          GROUP BY "productionLineId"
-        `;
-        
+        groupedData = await prisma.performanceRecord.groupBy({
+          by: ['productionLineId'],
+          where,
+          _sum: { piecesMade: true },
+          _avg: { errorRate: true, timeTaken: true },
+          _count: true,
+        });
+
         // Add production line details
-        for (const record of groupedData) {
+        for (let i = 0; i < groupedData.length; i++) {
           const productionLine = await prisma.productionLine.findUnique({
-            where: { id: record.productionlineid }, // Note: SQL returns lowercase column names
-            select: { id: true, name: true, location: true }
+            where: { id: groupedData[i].productionLineId },
+            select: { id: true, name: true, location: true, capacity: true }
           });
-          record.productionLine = productionLine;
+          groupedData[i].productionLine = productionLine;
         }
         break;
 
       case 'date':
       default:
-        // Group by date (daily analytics)
-        const records = await prisma.performanceRecord.findMany({
+        groupedData = await prisma.performanceRecord.groupBy({
+          by: ['date'],
           where,
-          select: {
-            date: true,
-            piecesMade: true,
-            errorRate: true,
-            timeTaken: true,
-          },
-          orderBy: { date: 'asc' }
+          _sum: { piecesMade: true },
+          _avg: { errorRate: true, timeTaken: true },
+          _count: true,
+          orderBy: { date: 'asc' },
         });
-
-        // Group by date manually
-        // Group by date using SQL for better performance
-        groupedData = await prisma.$queryRaw`
-          SELECT 
-            DATE(date) as date,
-            SUM("piecesMade") as total_pieces,
-            AVG("errorRate") as avg_error_rate,
-            AVG("timeTaken") as avg_time_taken,
-            COUNT(*) as record_count
-          FROM "PerformanceRecord"
-          WHERE date >= ${start} AND date <= ${end}
-          ${workerId ? prisma.$queryRaw`AND "workerId" = ${parseInt(workerId)}` : prisma.$queryRaw``}
-          ${productionLineId ? prisma.$queryRaw`AND "productionLineId" = ${parseInt(productionLineId)}` : prisma.$queryRaw``}
-          GROUP BY DATE(date)
-          ORDER BY date ASC
-        `;
-
-        // Transform raw SQL results to match the expected format
-        groupedData = groupedData.map((record: any) => ({
-          date: record.date,
-          _sum: { piecesMade: Number(record.total_pieces) },
-          _avg: { 
-            errorRate: Number(record.avg_error_rate) || 0,
-            timeTaken: Number(record.avg_time_taken) || 0,
-          },
-          _count: Number(record.record_count),
-        }));
         break;
     }
+
+    // Transform the data to ensure consistent format
+    const transformedGroupedData = groupedData.map((item: any) => {
+      // Convert BigInt values to regular numbers if they exist
+      const transformed: any = {
+        ...item,
+      };
+
+      // Handle _sum, _avg, _count fields
+      if (item._sum) {
+        transformed._sum = {
+          piecesMade: Number(item._sum.piecesMade) || 0
+        };
+      }
+      if (item._avg) {
+        transformed._avg = {
+          errorRate: Number(item._avg.errorRate) || 0,
+          timeTaken: Number(item._avg.timeTaken) || 0
+        };
+      }
+      if (item._count !== undefined) {
+        transformed._count = Number(item._count) || 0;
+      }
+
+      return transformed;
+    });
 
     res.json({
       success: true,
       analytics: {
         overall: {
-          totalPieces: overallMetrics._sum.piecesMade || 0,
-          avgErrorRate: overallMetrics._avg.errorRate || 0,
-          avgTimeTaken: overallMetrics._avg.timeTaken || 0,
-          totalRecords: overallMetrics._count,
+          totalPieces: Number(overallMetrics._sum.piecesMade) || 0,
+          avgErrorRate: Number(overallMetrics._avg.errorRate) || 0,
+          avgTimeTaken: Number(overallMetrics._avg.timeTaken) || 0,
+          totalRecords: Number(overallMetrics._count),
         },
-        grouped: groupedData,
+        grouped: transformedGroupedData,
         groupBy,
         dateRange: { startDate: start, endDate: end },
       }
