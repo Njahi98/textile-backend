@@ -14,6 +14,9 @@ import productionLineRoutes from './routes/productionLine';
 import assignmentRoutes from './routes/assignment';
 import productRoutes from './routes/product';
 import performanceRecordRoutes from './routes/performanceRecord';
+import accountRoutes from './routes/account'
+
+
 dotenv.config();
 
 const app = express();
@@ -48,7 +51,7 @@ app.use('/api/production-lines', productionLineRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/performance', performanceRecordRoutes);
-
+app.use('/api/settings/account',accountRoutes)
 
 
 // Health check

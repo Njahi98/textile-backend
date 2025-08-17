@@ -67,6 +67,10 @@ export const isAuthenticated = async (
       email: true,
       username: true,
       role: true,
+      firstName:true,
+      lastName:true,
+      status:true,
+      phone:true
     },
   });
 
