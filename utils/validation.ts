@@ -213,3 +213,41 @@ export const performanceRecordQuerySchema = z.object({
 export type CreatePerformanceRecordInput = z.infer<typeof createPerformanceRecordSchema>;
 export type UpdatePerformanceRecordInput = z.infer<typeof updatePerformanceRecordSchema>;
 export type PerformanceRecordQueryInput = z.infer<typeof performanceRecordQuerySchema>;
+
+//Chat and Notification Schemas
+export const PaginationSchema = z.object({
+  page: z.string().optional(),
+  limit: z.string().optional(),
+}).transform(data => ({
+  page: data.page ? parseInt(data.page, 10) || 1 : 1,
+  limit: data.limit ? Math.min(parseInt(data.limit, 10) || 20, 100) : 20,
+}));
+
+export const createConversationSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  participantIds: z.array(z.number().int().positive()).min(1).max(50),
+  isGroup: z.boolean(),
+});
+
+export const sendMessageSchema = z.object({
+  conversationId: z.number().int().positive(),
+  content: z.string().min(1).max(5000),
+  messageType: z.enum(['TEXT', 'IMAGE', 'FILE']).default('TEXT'),
+});
+
+export const markNotificationsReadSchema = z.object({
+  notificationIds: z.array(z.number().int().positive()).optional(),
+  markAll: z.boolean().optional(),
+}).refine(data => data.notificationIds || data.markAll, {
+  message: "Either provide notificationIds or set markAll to true",
+});
+
+export const searchUsersSchema = z.object({
+  q: z.string().min(2, 'Search query must be at least 2 characters').max(100, 'Search query too long'),
+});
+
+export type CreateConversationRequest = z.infer<typeof createConversationSchema>;
+export type SendMessageRequest = z.infer<typeof sendMessageSchema>;
+export type MarkNotificationsReadRequest = z.infer<typeof markNotificationsReadSchema>;
+export type SearchUsersRequest = z.infer<typeof searchUsersSchema>;
+export type PaginationRequest = z.infer<typeof PaginationSchema>;
