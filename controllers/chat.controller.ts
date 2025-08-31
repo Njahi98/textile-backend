@@ -46,6 +46,7 @@ export const getConversations = async (
                 username: true,
                 firstName: true,
                 lastName: true,
+                avatarUrl:true,
               },
             },
           },
@@ -65,6 +66,7 @@ export const getConversations = async (
                 username: true,
                 firstName: true,
                 lastName: true,
+                avatarUrl:true,
               },
             },
           },
@@ -176,6 +178,7 @@ export const getConversationMessages = async (
             username: true,
             firstName: true,
             lastName: true,
+            avatarUrl:true,
           },
         },
         readReceipts: {

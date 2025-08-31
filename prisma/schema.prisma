@@ -27,23 +27,25 @@ enum Status {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  username  String   @unique
-  firstName String?
-  lastName  String?
-  phone     String?  @unique
-  status    Status   @default(active)
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  email          String   @unique
+  password       String
+  username       String   @unique
+  firstName      String?
+  lastName       String?
+  phone          String?  @unique
+  status         Status   @default(active)
+  role           Role     @default(USER)
+  avatarUrl      String? // Cloudinary image URL
+  avatarPublicId String? // Cloudinary public_id for management
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  Conversation Conversation[] @relation("ConversationCreator")
+  Conversation            Conversation[]            @relation("ConversationCreator")
   ConversationParticipant ConversationParticipant[]
-  Message Message[]
-  MessageReadReceipt MessageReadReceipt[]
-  Notification Notification[]
+  Message                 Message[]
+  MessageReadReceipt      MessageReadReceipt[]
+  Notification            Notification[]
 }
 
 model Worker {
@@ -60,16 +62,16 @@ model Worker {
 }
 
 model ProductionLine {
-  id           Int          @id @default(autoincrement())
-  name         String
-  description  String?
-  capacity     Int?
-  isActive     Boolean      @default(true)
-  targetOutput Int?
-  location     String?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  assignments  Assignment[]
+  id                 Int                 @id @default(autoincrement())
+  name               String
+  description        String?
+  capacity           Int?
+  isActive           Boolean             @default(true)
+  targetOutput       Int?
+  location           String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  assignments        Assignment[]
   performanceRecords PerformanceRecord[]
 }
 
@@ -77,7 +79,7 @@ model Assignment {
   id               Int            @id @default(autoincrement())
   workerId         Int
   productionLineId Int
-  position         String 
+  position         String
   date             DateTime
   shift            String
   createdAt        DateTime       @default(now())
@@ -94,7 +96,7 @@ model Product {
   name               String
   code               String              @unique // SKU or product code
   description        String?
-  category           String? 
+  category           String?
   unitPrice          Float?
   imageUrl           String? // Cloudinary image URL
   imagePublicId      String? // Cloudinary public_id for management
@@ -112,8 +114,8 @@ model PerformanceRecord {
   date             DateTime
   piecesMade       Int
   shift            String?
-  timeTaken        Float 
-  errorRate        Float 
+  timeTaken        Float
+  errorRate        Float
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   worker           Worker         @relation(fields: [workerId], references: [id])
@@ -125,52 +127,51 @@ model PerformanceRecord {
   @@index([productionLineId, date])
 }
 
-
 model Conversation {
-  id          Int      @id @default(autoincrement())
-  name        String?  // For group chats
-  isGroup     Boolean  @default(false)
-  createdBy   Int?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  creator     User?    @relation("ConversationCreator", fields: [createdBy], references: [id])
+  id        Int      @id @default(autoincrement())
+  name      String? // For group chats
+  isGroup   Boolean  @default(false)
+  createdBy Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  creator      User?                     @relation("ConversationCreator", fields: [createdBy], references: [id])
   participants ConversationParticipant[]
-  messages    Message[]
-  
+  messages     Message[]
+
   @@index([updatedAt])
 }
 
 model ConversationParticipant {
-  id             Int      @id @default(autoincrement())
+  id             Int       @id @default(autoincrement())
   conversationId Int
   userId         Int
-  joinedAt       DateTime @default(now())
+  joinedAt       DateTime  @default(now())
   lastReadAt     DateTime?
-  isActive       Boolean  @default(true)
-  
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  isActive       Boolean   @default(true)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([conversationId, userId])
   @@index([userId])
 }
 
 model Message {
-  id             Int      @id @default(autoincrement())
+  id             Int         @id @default(autoincrement())
   conversationId Int
   senderId       Int
   content        String
   messageType    MessageType @default(TEXT)
-  isEdited       Boolean  @default(false)
-  isDeleted      Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender        User         @relation(fields: [senderId], references: [id])
-  readReceipts  MessageReadReceipt[]
-  
+  isEdited       Boolean     @default(false)
+  isDeleted      Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  conversation Conversation         @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User                 @relation(fields: [senderId], references: [id])
+  readReceipts MessageReadReceipt[]
+
   @@index([conversationId, createdAt])
   @@index([senderId])
 }
@@ -180,10 +181,10 @@ model MessageReadReceipt {
   messageId Int
   userId    Int
   readAt    DateTime @default(now())
-  
-  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([messageId, userId])
 }
 
@@ -193,12 +194,12 @@ model Notification {
   type      NotificationType
   title     String
   content   String
-  data      Json?           // Additional data (like messageId, conversationId, etc.)
-  isRead    Boolean         @default(false)
-  createdAt DateTime        @default(now())
-  
-  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  data      Json? // Additional data (like messageId, conversationId, etc.)
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId, isRead])
   @@index([createdAt])
 }

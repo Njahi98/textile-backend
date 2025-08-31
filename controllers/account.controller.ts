@@ -3,7 +3,50 @@ import { prisma } from "server";
 import bcrypt from "bcrypt"
 import { Role, Status } from 'generated/prisma';
 import { AuthenticatedRequest } from "../types";
+import { uploadImageToCloudinary, deleteImageFromCloudinary } from "../utils/imageUpload";
 
+export const accountSettings = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        status: true,
+        role: true,
+        avatarUrl: true,
+        avatarPublicId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!user) {
+      res.status(404).json({
+        error: 'USER_NOT_FOUND',
+        message: 'User not found'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const updateAccount = async (
   req: AuthenticatedRequest,
@@ -91,6 +134,8 @@ export const updateAccount = async (
         phone: true,
         status: true,
         role: true,
+        avatarUrl: true,
+        avatarPublicId: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -99,6 +144,150 @@ export const updateAccount = async (
     res.json({
       success: true,
       message: 'User updated successfully',
+      user: updatedUser,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateAvatar = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+
+    // Get existing user to handle avatar replacement
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { avatarPublicId: true }
+    });
+
+    if (!existingUser) {
+      res.status(404).json({
+        error: 'USER_NOT_FOUND',
+        message: 'User not found'
+      });
+      return;
+    }
+
+    if (!req.file) {
+      res.status(400).json({
+        error: 'NO_FILE',
+        message: 'No avatar file provided'
+      });
+      return;
+    }
+
+    try {
+      // Upload new avatar
+      const uploadResult = await uploadImageToCloudinary(req.file.buffer, 'avatars');
+
+      // Delete old avatar if it exists
+      if (existingUser.avatarPublicId) {
+        await deleteImageFromCloudinary(existingUser.avatarPublicId);
+      }
+
+      // Update user with new avatar
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          avatarUrl: uploadResult.url,
+          avatarPublicId: uploadResult.publicId,
+        },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          firstName: true,
+          lastName: true,
+          phone: true,
+          status: true,
+          role: true,
+          avatarUrl: true,
+          avatarPublicId: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      res.json({
+        success: true,
+        message: 'Avatar updated successfully',
+        user: updatedUser,
+      });
+    } catch (uploadError) {
+      res.status(400).json({
+        error: 'AVATAR_UPLOAD_FAILED',
+        message: 'Failed to upload avatar'
+      });
+      return;
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteAvatar = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { avatarPublicId: true, avatarUrl: true }
+    });
+
+    if (!user) {
+      res.status(404).json({
+        error: 'USER_NOT_FOUND',
+        message: 'User not found'
+      });
+      return;
+    }
+
+    if (!user.avatarPublicId) {
+      res.status(400).json({
+        error: 'NO_AVATAR',
+        message: 'User has no avatar to delete'
+      });
+      return;
+    }
+
+    // Delete avatar from Cloudinary
+    await deleteImageFromCloudinary(user.avatarPublicId);
+
+    // Update user to remove avatar references
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        avatarUrl: null,
+        avatarPublicId: null,
+      },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        status: true,
+        role: true,
+        avatarUrl: true,
+        avatarPublicId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    res.json({
+      success: true,
+      message: 'Avatar deleted successfully',
       user: updatedUser,
     });
   } catch (error) {
@@ -116,6 +305,7 @@ export const deleteAccount = async (
 
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
+      select: { avatarPublicId: true }
     });
 
     if (!existingUser) {
@@ -124,6 +314,11 @@ export const deleteAccount = async (
         message: 'User not found'
       });
       return;
+    }
+
+    // Delete avatar from Cloudinary if it exists
+    if (existingUser.avatarPublicId) {
+      await deleteImageFromCloudinary(existingUser.avatarPublicId);
     }
 
     await prisma.user.delete({

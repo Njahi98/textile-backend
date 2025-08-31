@@ -11,15 +11,29 @@ export const uploadImageToCloudinary = async (
   folder: string = 'products'
 ): Promise<ImageUploadResult> => {
   return new Promise((resolve, reject) => {
+    // Different transformations based on folder type
+    const getTransformations = (folder: string) => {
+      if (folder === 'avatars') {
+        return [
+          { width: 400, height: 400, crop: 'fill', gravity: 'face' }, // Square crop focusing on face
+          { quality: 'auto' },
+          { format: 'auto' }
+        ];
+      }
+      
+      // Default transformations for products
+      return [
+        { width: 800, height: 800, crop: 'limit' },
+        { quality: 'auto' },
+        { format: 'auto' }
+      ];
+    };
+
     cloudinary.uploader.upload_stream(
       {
         folder: folder,
         resource_type: 'image',
-        transformation: [
-          { width: 800, height: 800, crop: 'limit' },
-          { quality: 'auto' },
-          { format: 'auto' }
-        ]
+        transformation: getTransformations(folder)
       },
       (error, result: UploadApiResponse | undefined) => {
         if (error) {
