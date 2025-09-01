@@ -165,6 +165,11 @@ model Message {
   messageType    MessageType @default(TEXT)
   isEdited       Boolean     @default(false)
   isDeleted      Boolean     @default(false)
+  fileUrl        String?     // Cloudinary URL for files
+  fileName       String?     // Original filename
+  fileSize       Int?        // File size in bytes
+  filePublicId   String?     // Cloudinary public_id for management
+
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
@@ -208,6 +213,7 @@ enum MessageType {
   TEXT
   IMAGE
   FILE
+  VIDEO 
   SYSTEM
 }
 

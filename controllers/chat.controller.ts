@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../server';
 import { AuthenticatedRequest } from '../types';
+import { uploadFileToCloudinary } from '../utils/imageUpload';
 
 interface CreateConversationData {
   name?: string;
@@ -503,3 +504,125 @@ export const testNotification = async (req: Request, res: Response, next: NextFu
       next(error);
     }
   }
+
+
+export const uploadFile = async (
+  req: Request<{ conversationId: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const conversationId = parseInt(req.params.conversationId);
+    const userId = (req as AuthenticatedRequest).user!.id;
+
+    if (isNaN(conversationId)) {
+      res.status(400).json({
+        error: 'INVALID_ID',
+        message: 'Invalid conversation ID provided'
+      });
+      return;
+    }
+
+    if (!req.file) {
+      res.status(400).json({
+        error: 'NO_FILE',
+        message: 'No file provided'
+      });
+      return;
+    }
+
+    // Verify user is participant
+    const participant = await prisma.conversationParticipant.findFirst({
+      where: {
+        conversationId,
+        userId,
+        isActive: true,
+      },
+    });
+
+    if (!participant) {
+      res.status(403).json({
+        error: 'ACCESS_DENIED',
+        message: 'You are not a participant in this conversation'
+      });
+      return;
+    }
+
+    try {
+      // Upload file to Cloudinary
+      const uploadResult = await uploadFileToCloudinary(
+        req.file.buffer,
+        req.file.originalname,
+        req.file.mimetype,
+        'chat-files'
+      );
+
+      // Determine message type
+      let messageType: 'IMAGE' | 'VIDEO' | 'FILE' = 'FILE';
+      if (req.file.mimetype.startsWith('image/')) {
+        messageType = 'IMAGE';
+      } else if (req.file.mimetype.startsWith('video/')) {
+        messageType = 'VIDEO';
+      }
+
+      // Create message with file data
+      const message = await prisma.message.create({
+        data: {
+          conversationId,
+          senderId: userId,
+          content: req.file.originalname, // Store original filename as content
+          messageType,
+          fileUrl: uploadResult.url,
+          fileName: uploadResult.fileName,
+          fileSize: uploadResult.fileSize,
+          filePublicId: uploadResult.publicId,
+        },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              username: true,
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
+            },
+          },
+          readReceipts: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      // Update conversation timestamp
+      await prisma.conversation.update({
+        where: { id: conversationId },
+        data: { updatedAt: new Date() },
+      });
+
+      // Emit through socket if available
+      if (global.socketService) {
+        global.socketService.sendToConversation(conversationId, 'new_message', message);
+      }
+
+      res.json({
+        success: true,
+        message,
+      });
+    } catch (uploadError) {
+      res.status(400).json({
+        error: 'FILE_UPLOAD_FAILED',
+        message: 'Failed to upload file'
+      });
+      return;
+    }
+  } catch (error) {
+    next(error);
+  }
+};

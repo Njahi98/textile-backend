@@ -8,6 +8,8 @@ import {
   searchUsersSchema,
   PaginationSchema,
 } from '../utils/validation';
+import { chatUploadSingle } from '../middleware/multer';
+
 
 const router = express.Router();
 
@@ -26,6 +28,10 @@ router.post('/conversations',
 router.get('/conversations/:conversationId/messages', 
   validateQuery(PaginationSchema),
   chatController.getConversationMessages
+);
+router.post('/conversations/:conversationId/upload', 
+  chatUploadSingle,
+  chatController.uploadFile
 );
 
 router.get('/notifications', 
