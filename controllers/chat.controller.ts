@@ -471,6 +471,7 @@ export const searchUsers = async (
         firstName: true,
         lastName: true,
         email: true,
+        avatarUrl: true,
       },
       take: 10,
     });
