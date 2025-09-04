@@ -8,8 +8,10 @@ import { errorHandler } from './middleware/errorHandler';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import { apiLimiter, authLimiter } from './middleware/rateLimiter';
+import SocketService from './utils/socketService';
 
 import authRoutes from './routes/auth';
+import dashboardRoutes from './routes/dashboard';
 import userRoutes from './routes/user';
 import workerRoutes from './routes/worker';
 import productionLineRoutes from './routes/productionLine';
@@ -18,7 +20,6 @@ import productRoutes from './routes/product';
 import performanceRecordRoutes from './routes/performanceRecord';
 import accountRoutes from './routes/account';
 import chatRoutes from './routes/chat';
-import SocketService from './utils/socketService';
 
 dotenv.config();
 
@@ -63,6 +64,7 @@ app.use('/api/auth',
   process.env.NODE_ENV === 'production' ? authLimiter : [],
   authRoutes
 );
+app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/workers', workerRoutes);
 app.use('/api/production-lines', productionLineRoutes);

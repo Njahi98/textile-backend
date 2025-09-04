@@ -332,7 +332,6 @@ public async createNotification(userId: number, notificationData: {
   });
 
   if (recentDuplicate) {
-    console.log('Skipping duplicate notification');
     return recentDuplicate;
   }
 
