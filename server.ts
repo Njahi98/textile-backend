@@ -9,6 +9,7 @@ import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import { apiLimiter, authLimiter } from './middleware/rateLimiter';
 import SocketService from './utils/socketService';
+import { cleanupExpiredSessions } from './utils/sessionManager';
 
 import authRoutes from './routes/auth';
 import dashboardRoutes from './routes/dashboard';
@@ -113,6 +114,16 @@ const gracefulShutdown = async (signal: string) => {
 
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
+// Cleanup expired sessions every 24 hours
+setInterval(async () => {
+  try {
+    await cleanupExpiredSessions();
+    console.log('Expired sessions cleaned up');
+  } catch (error) {
+    console.error('Error cleaning up expired sessions:', error);
+  }
+}, 24 * 60 * 60 * 1000); // 24 hours
 
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

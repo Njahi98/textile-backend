@@ -6,6 +6,14 @@ import { RegisterRequest, LoginRequest, emailResetRequest, PasswordResetRequest 
 import { CustomError } from '@/middleware/errorHandler';
 import { sendEmail } from '@/utils/email';
 import { AuthenticatedRequest, passwordResetJwtPayload } from '../types';
+import crypto from 'crypto';
+import { 
+  createUserSession, 
+  validateUserSession, 
+  revokeUserSession, 
+  revokeAllUserSessions,
+  cleanupExpiredSessions 
+} from '../utils/sessionManager';
 
 if (!process.env.JWT_SECRET) {
   const error = new Error('JWT_SECRET is not configured') as CustomError;
@@ -14,9 +22,72 @@ if (!process.env.JWT_SECRET) {
   throw error;
 }
 
+if (!process.env.JWT_REFRESH_SECRET) {
+  const error = new Error('JWT_REFRESH_SECRET is not configured') as CustomError;
+  error.statusCode = 500;
+  error.message = 'Internal server configuration error';
+  throw error;
+}
+
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = '7d';
-const COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+const ACCESS_TOKEN_EXPIRES_IN = '15m'; 
+const REFRESH_TOKEN_EXPIRES_IN = '7d'; 
+const ACCESS_COOKIE_MAX_AGE = 15 * 60 * 1000; 
+const REFRESH_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+
+// Helper function to generate token pair and store refresh token in database
+const generateTokenPair = async (userId: number, req: Request) => {
+  const accessToken = jwt.sign(
+    { userId, type: 'access' },
+    JWT_SECRET,
+    { expiresIn: ACCESS_TOKEN_EXPIRES_IN }
+  );
+
+  const refreshToken = jwt.sign(
+    { userId, type: 'refresh', jti: crypto.randomUUID() },
+    JWT_REFRESH_SECRET,
+    { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
+  );
+
+  // Store refresh token in database
+  await createUserSession(userId, refreshToken, req);
+
+  return { accessToken, refreshToken };
+};
+
+// Helper function to set auth cookies
+const setAuthCookies = (res: Response, accessToken: string, refreshToken: string) => {
+  res.cookie('accessToken', accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: ACCESS_COOKIE_MAX_AGE,
+  });
+
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: REFRESH_COOKIE_MAX_AGE,
+  });
+};
+
+// Helper function to clear auth cookies
+const clearAuthCookies = (res: Response) => {
+  res.clearCookie('accessToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    path: '/',
+  });
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    path: '/',
+  });
+};
 
 export const register = async (
   req: Request,
@@ -56,18 +127,8 @@ export const register = async (
       },
     });
 
-    const token = jwt.sign(
-      { userId: user.id },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
-    );
-
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: COOKIE_MAX_AGE,
-    });
+    const { accessToken, refreshToken } = await generateTokenPair(user.id, req);
+    setAuthCookies(res, accessToken, refreshToken);
 
     res.status(201).json({
       success: true,
@@ -126,18 +187,8 @@ export const login = async (
       return;
     }
 
-    const token = jwt.sign(
-      { userId: user.id},
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
-    );
-
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: COOKIE_MAX_AGE,
-    });
+    const { accessToken, refreshToken } = await generateTokenPair(user.id, req);
+    setAuthCookies(res, accessToken, refreshToken);
 
     res.json({
       success: true,
@@ -154,26 +205,128 @@ export const login = async (
   }
 };
 
-export const logout = (req: Request, res: Response): void => {
-  // no need to try/catch (cookie operations don't throw)
-    const token = req.cookies.token;
-  if(!token) {
-    res.status(400).json({
-      error: 'No active session',
-      message: 'You are not logged in or your session has expired'
+export const refreshToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      res.status(401).json({
+        error: 'NoRefreshToken',
+        message: 'Refresh token is required',
+      });
+      return;
+    }
+
+    // Validate refresh token in database
+    const sessionData = await validateUserSession(refreshToken);
+    if (!sessionData) {
+      clearAuthCookies(res);
+      res.status(401).json({
+        error: 'InvalidRefreshToken',
+        message: 'Invalid or expired refresh token',
+      });
+      return;
+    }
+
+    // Verify JWT token
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET) as any;
+    } catch (jwtError) {
+      // Revoke invalid session from database
+      await revokeUserSession(refreshToken);
+      clearAuthCookies(res);
+      res.status(401).json({
+        error: 'InvalidRefreshToken',
+        message: 'Invalid or expired refresh token',
+      });
+      return;
+    }
+
+    // Verify token type
+    if (decoded.type !== 'refresh') {
+      await revokeUserSession(refreshToken);
+      clearAuthCookies(res);
+      res.status(401).json({
+        error: 'InvalidTokenType',
+        message: 'Invalid token type',
+      });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        role: true,
+        status: true,
+      },
     });
-    return;
+
+    if (!user || user.status !== 'active') {
+      await revokeUserSession(refreshToken);
+      clearAuthCookies(res);
+      res.status(401).json({
+        error: 'UserNotFound',
+        message: 'User account no longer exists or has been deactivated',
+      });
+      return;
+    }
+
+    // Revoke old refresh token and generate new token pair (token rotation)
+    await revokeUserSession(refreshToken);
+    const { accessToken, refreshToken: newRefreshToken } = await generateTokenPair(user.id, req);
+    setAuthCookies(res, accessToken, newRefreshToken);
+
+    res.json({
+      success: true,
+      message: 'Tokens refreshed successfully',
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    next(error);
   }
-  res.clearCookie('token', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    path: '/', // Explicitly clear from all paths
-  });
-  res.status(200).json({ 
-    success: true,
-    message: 'Logged out successfully' 
-  });
+};
+
+export const logout = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    
+    if (!refreshToken) {
+      res.status(400).json({
+        error: 'No active session',
+        message: 'You are not logged in or your session has expired'
+      });
+      return;
+    }
+
+    // Revoke the session from database
+    await revokeUserSession(refreshToken);
+    clearAuthCookies(res);
+    
+    res.status(200).json({ 
+      success: true,
+      message: 'Logged out successfully' 
+    });
+  } catch (error) {
+    // Even if revoking fails, clear cookies
+    clearAuthCookies(res);
+    res.status(200).json({ 
+      success: true,
+      message: 'Logged out successfully' 
+    });
+  }
 };
 
 export const requestPasswordReset = async(req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -193,14 +346,13 @@ export const requestPasswordReset = async(req: Request, res: Response, next: Nex
       return;
     }
 
-    const token = jwt.sign(
-      //Added a purpose field to the JWT to prevent token reuse
+    const resetToken = jwt.sign(
       { userId: user.id, purpose: 'password-reset' },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
     
-    const resetLink = `${process.env.FRONTEND_URL}/auth/reset-password?token=${token}`;
+    const resetLink = `${process.env.FRONTEND_URL}/auth/reset-password?token=${resetToken}`;
     
     await sendEmail({
       to: email,
@@ -265,6 +417,9 @@ export const resetPassword = async(req: Request, res: Response, next: NextFuncti
       where: { id: user.id },
       data: { password: hashedPassword }
     });
+
+    // Revoke all sessions for security after password reset
+    await revokeAllUserSessions(user.id);
 
     res.status(200).json({
       success: true,

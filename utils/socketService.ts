@@ -1,5 +1,5 @@
 import { Server, Socket } from 'socket.io';
-import jwt from 'jsonwebtoken';
+import { isAuthenticatedSocket } from '../middleware/isAuthenticated';
 import { prisma } from '../server';
 
 interface AuthenticatedSocket {
@@ -30,9 +30,10 @@ class SocketService {
   private setupMiddleware() {
     this.io.use(async (socket: SocketWithAuth, next) => {
       try {
+        let token = '';
         
         // Try auth.token (manual) first
-        let token = socket.handshake.auth.token;
+        token = socket.handshake.auth.token;
         
         // Try Authorization header
         if (!token && socket.handshake.headers.authorization) {
@@ -49,33 +50,25 @@ class SocketService {
               cookies[parts[0]] = decodeURIComponent(parts[1]);
             }
           });
-          token = cookies.token; // Your HTTP-only cookie name
-        }
+          
+          // Try accessToken first (primary authentication)
+          token = cookies.accessToken;
 
+        }
 
         if (!token) {
           return next(new Error("Authentication token required"));
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number };
-
-        const user = await prisma.user.findUnique({
-          where: { id: decoded.userId },
-          select: {
-            id: true,
-            username: true,
-            email: true,
-            role: true,
-            status: true,
-          },
-        });
-
-        if (!user || user.status !== "active") {
-          return next(new Error("Invalid user or inactive account"));
+        // Use the socket-specific authentication function
+        const authResult = await isAuthenticatedSocket(token);
+        
+        if (!authResult) {
+          return next(new Error("Invalid authentication token"));
         }
 
-        socket.userId = user.id;
-        socket.user = user;
+        socket.userId = authResult.userId;
+        socket.user = authResult.user;
 
         next();
       } catch (error) {
@@ -156,9 +149,16 @@ class SocketService {
         }
       });
 
+      // Handle token refresh notification (client-side initiated)
+      socket.on('token_refreshed', () => {
+        // Client notifies server that tokens were refreshed
+        // Socket connection remains valid until access token expires
+        console.log(`User ${socket.user?.username} refreshed their tokens`);
+      });
+
       // Handle disconnect
-      socket.on('disconnect', () => {
-        console.log(`User ${socket.user?.username} disconnected`);
+      socket.on('disconnect', (reason) => {
+        console.log(`User ${socket.user?.username} disconnected: ${reason}`);
         this.removeUserSocket(socket.userId!, socket.id);
       });
     });
@@ -311,42 +311,41 @@ class SocketService {
   }
 
   // Public methods for external use
-// In socketService.ts, modify createNotification to check for recent duplicates
-public async createNotification(userId: number, notificationData: {
-  type: 'NEW_MESSAGE' | 'MENTION' | 'SYSTEM' | 'PERFORMANCE_ALERT';
-  title: string;
-  content: string;
-  data?: any;
-}) {
-  // Check for recent duplicate notifications (within last 5 minutes)
-  const recentDuplicate = await prisma.notification.findFirst({
-    where: {
-      userId,
-      type: notificationData.type,
-      title: notificationData.title,
-      content: notificationData.content,
-      createdAt: {
-        gte: new Date(Date.now() - 5 * 60 * 1000) // 5 minutes ago
+  public async createNotification(userId: number, notificationData: {
+    type: 'NEW_MESSAGE' | 'MENTION' | 'SYSTEM' | 'PERFORMANCE_ALERT';
+    title: string;
+    content: string;
+    data?: any;
+  }) {
+    // Check for recent duplicate notifications (within last 5 minutes)
+    const recentDuplicate = await prisma.notification.findFirst({
+      where: {
+        userId,
+        type: notificationData.type,
+        title: notificationData.title,
+        content: notificationData.content,
+        createdAt: {
+          gte: new Date(Date.now() - 5 * 60 * 1000) // 5 minutes ago
+        }
       }
+    });
+
+    if (recentDuplicate) {
+      return recentDuplicate;
     }
-  });
 
-  if (recentDuplicate) {
-    return recentDuplicate;
+    const notification = await prisma.notification.create({
+      data: {
+        userId,
+        ...notificationData,
+      },
+    });
+
+    // Send real-time notification if user is online
+    this.io.to(`user:${userId}`).emit('new_notification', notification);
+
+    return notification;
   }
-
-  const notification = await prisma.notification.create({
-    data: {
-      userId,
-      ...notificationData,
-    },
-  });
-
-  // Send real-time notification if user is online
-  this.io.to(`user:${userId}`).emit('new_notification', notification);
-
-  return notification;
-}
 
   public sendToUser(userId: number, event: string, data: any) {
     this.io.to(`user:${userId}`).emit(event, data);

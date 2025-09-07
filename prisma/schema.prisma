@@ -46,6 +46,7 @@ model User {
   Message                 Message[]
   MessageReadReceipt      MessageReadReceipt[]
   Notification            Notification[]
+  UserSession             UserSession[]
 }
 
 model Worker {
@@ -222,4 +223,21 @@ enum NotificationType {
   MENTION
   SYSTEM
   PERFORMANCE_ALERT
+}
+
+model UserSession {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  refreshToken String   @unique
+  deviceInfo   String?  // User-Agent or device identifier
+  ipAddress    String?  // IP address for security tracking
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([refreshToken])
+  @@index([expiresAt])
 }
