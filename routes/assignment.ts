@@ -17,41 +17,28 @@ import {
 
 const router = express.Router();
 
+router.use(isAuthenticated);
 
+router.get('/calendar', getAssignmentsCalendar);
 
-// Get assignments calendar (query validation)
-// @ts-ignore
-router.get('/calendar', isAuthenticated, getAssignmentsCalendar);
+router.get('/conflicts', getAssignmentConflicts);
 
-// Get assignment conflicts (optional query validation)
-router.get('/conflicts', isAuthenticated, getAssignmentConflicts);
+router.get('/', getAllAssignments);
 
-// @ts-ignore
-router.get('/', isAuthenticated, getAllAssignments);
-
-// @ts-ignore
-router.get('/:id', isAuthenticated, getAssignmentById);
+router.get('/:id', getAssignmentById);
 
 router.post(
   '/',
-  isAuthenticated,
-  requireAdmin,
   validate(createAssignmentSchema),
   createAssignment
 );
-
 router.put(
   '/:id',
-  isAuthenticated,
-  requireAdmin,
   validate(updateAssignmentSchema),
-  // @ts-ignore
+  //@ts-ignore
   updateAssignment
 );
 
-// @ts-ignore
-router.delete('/:id', isAuthenticated, requireAdmin, deleteAssignment);
-
-
+router.delete('/:id', deleteAssignment);
 
 export default router;

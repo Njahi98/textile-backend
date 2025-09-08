@@ -24,7 +24,7 @@ const withRequestHandler = (fn: Function) => (
 
 const router = express.Router();
 
-router.use(isAuthenticated, requireAdmin);
+router.use(isAuthenticated);
 
 router.get('/', withRequestHandler(getAllPerformanceRecords));
 router.get('/analytics', withRequestHandler(getPerformanceAnalytics));

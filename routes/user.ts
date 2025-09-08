@@ -1,5 +1,5 @@
 import express from 'express';
-import { isAuthenticated, requireAdmin } from '@/middleware/isAuthenticated';
+import { isAuthenticated, requireAdmin, requireAdminOrSuperAdmin, requireSuperAdmin } from '@/middleware/isAuthenticated';
 import {
   getAllUsers,
   getUserById,
@@ -12,13 +12,11 @@ import { createUserSchema, updateUserSchema } from '../utils/validation';
 
 const router = express.Router();
 
-// All routes require admin authentication
-router.use(isAuthenticated, requireAdmin);
-
-router.get('/', getAllUsers);
-router.get('/:id', getUserById);
-router.post('/', validate(createUserSchema), createUser);
-router.put('/:id', validate(updateUserSchema), updateUser);
-router.delete('/:id', deleteUser);
+router.use(isAuthenticated);
+router.get('/',requireAdminOrSuperAdmin, getAllUsers);
+router.get('/:id',requireAdminOrSuperAdmin, getUserById);
+router.post('/',requireSuperAdmin, validate(createUserSchema), createUser);
+router.put('/:id',requireSuperAdmin, validate(updateUserSchema), updateUser);
+router.delete('/:id',requireSuperAdmin, deleteUser);
 
 export default router;

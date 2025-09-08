@@ -24,7 +24,7 @@ const upload = multer({
 });
 
 
-router.use(isAuthenticated,requireAdmin);
+router.use(isAuthenticated);
 
 router.get('/',getAllWorkers);
 router.get('/:id', getWorkerById);

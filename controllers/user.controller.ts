@@ -58,12 +58,12 @@ export const getAllUsers = async (
 };
 
 export const getUserById = async (
-  req: Request<idParams>,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = parseInt(req.params.id);
+    const userId = Number(req.params.id);
     if (isNaN(userId)) {
       res.status(400).json({
         error: 'INVALID_ID',

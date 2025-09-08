@@ -13,7 +13,7 @@ import { createProductionLineSchema, updateProductionLineSchema } from '../utils
 
 const router = express.Router();
 
-router.use(isAuthenticated, requireAdmin);
+router.use(isAuthenticated);
 
 router.get('/', getAllProductionLines);
 router.get('/:id', getProductionLineById);

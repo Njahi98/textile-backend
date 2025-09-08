@@ -16,7 +16,7 @@ import { imageUploadLimiter } from '../middleware/rateLimiter';
 
 const router = express.Router();
 
-router.use(isAuthenticated, requireAdmin);
+router.use(isAuthenticated);
 
 router.get('/', getAllProducts);
 router.get('/:id', getProductById);

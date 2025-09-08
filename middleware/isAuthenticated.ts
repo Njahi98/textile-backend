@@ -8,7 +8,9 @@ import { validateUserSession, revokeUserSession } from '../utils/sessionManager'
 const JWT_SECRET = process.env.JWT_SECRET!;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
 
-const authorizeRole = (role: Role) => {
+const authorizeRole = (roles: Role | Role[]) => {
+  const allowedRoles = Array.isArray(roles) ? roles : [roles];
+  
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
       res.status(401).json({
@@ -18,10 +20,10 @@ const authorizeRole = (role: Role) => {
       return;
     }
 
-    if (req.user.role !== role) {
-       res.status(403).json({
+    if (!allowedRoles.includes(req.user.role)) {
+      res.status(403).json({
         error: 'Forbidden',
-        message: `This action requires ${role} privileges`,
+        message: `This action requires ${allowedRoles.join(' or ')} privileges`,
       });
       return;
     }
@@ -196,4 +198,6 @@ export const isAuthenticatedSocket = async (token: string): Promise<{ userId: nu
 
 // Role-based exports
 export const requireAdmin = authorizeRole('ADMIN');
+export const requireSuperAdmin = authorizeRole('SUPERADMIN');
 export const requireUser = authorizeRole('USER');
+export const requireAdminOrSuperAdmin = authorizeRole(['ADMIN', 'SUPERADMIN']);
