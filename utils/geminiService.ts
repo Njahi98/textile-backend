@@ -24,11 +24,6 @@ interface InsightData {
     production: number;
     errorRate: number;
   }>;
-  assignments: {
-    totalAssignments: number;
-    conflicts: number;
-    utilizationRate: number;
-  };
 }
 
 class GeminiService {
@@ -105,12 +100,6 @@ ${data.productionLineMetrics.map(pl =>
 
 RECENT TRENDS (Last 7 days):
 ${data.trends.map(t => `${t.date}: ${t.production} pieces, ${t.errorRate}% errors`).join('\n')}
-
-ASSIGNMENT METRICS:
-- Total Assignments: ${data.assignments.totalAssignments}
-- Conflicts: ${data.assignments.conflicts}
-- Utilization Rate: ${data.assignments.utilizationRate}%
-
 Analyze this data and respond ONLY with valid JSON in this exact structure:
 {
   "summary": "Brief 2-3 sentence overview of overall performance",
