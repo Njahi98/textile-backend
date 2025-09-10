@@ -21,6 +21,7 @@ import productRoutes from './routes/product';
 import performanceRecordRoutes from './routes/performanceRecord';
 import accountRoutes from './routes/account';
 import chatRoutes from './routes/chat';
+import insightsRoutes from './routes/insights';
 
 dotenv.config();
 
@@ -74,6 +75,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/performance', performanceRecordRoutes);
 app.use('/api/settings/account', accountRoutes);
 app.use('/api/chat', chatRoutes); 
+app.use('/api/insights', insightsRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -123,7 +125,7 @@ setInterval(async () => {
   } catch (error) {
     console.error('Error cleaning up expired sessions:', error);
   }
-}, 24 * 60 * 60 * 1000); // 24 hours
+}, 24 * 60 * 60 * 1000);
 
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

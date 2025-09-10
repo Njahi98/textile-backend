@@ -13,6 +13,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@google/genai": "^1.18.0",
     "@prisma/client": "^6.6.0",
     "@types/cookie-parser": "^1.4.8",
     "@types/morgan": "^1.9.9",
