@@ -19,7 +19,7 @@ export const getAllAssignments = async (
   try {
     const {
       page = 1,
-      limit = 20,
+      limit = 100,
       ...filters
     } = req.query;
     const pageNum = Number(page) || 1;

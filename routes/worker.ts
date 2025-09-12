@@ -26,12 +26,12 @@ const upload = multer({
 
 router.use(isAuthenticated);
 
-router.get('/',getAllWorkers);
-router.get('/:id', getWorkerById);
-router.post('/',validate(workerCreateSchema),createWorker);
-router.post('/import', upload.single('file'), importWorkers);
-router.put('/:id',validate(workerUpdateSchema),updateWorker);
-router.delete('/:id',deleteWorker);
+router.get('/workers/',getAllWorkers);
+router.get('/workers/:id', getWorkerById);
+router.post('/workers/',validate(workerCreateSchema),createWorker);
+router.post('/workers/import', upload.single('file'), importWorkers);
+router.put('/workers/:id',validate(workerUpdateSchema),updateWorker);
+router.delete('/workers/:id',deleteWorker);
 
 
 

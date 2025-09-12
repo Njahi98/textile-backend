@@ -19,26 +19,26 @@ const router = express.Router();
 
 router.use(isAuthenticated);
 
-router.get('/calendar', getAssignmentsCalendar);
+router.get('/assignments/calendar', getAssignmentsCalendar);
 
-router.get('/conflicts', getAssignmentConflicts);
+router.get('/assignments/conflicts', getAssignmentConflicts);
 
-router.get('/', getAllAssignments);
+router.get('/assignments/', getAllAssignments);
 
-router.get('/:id', getAssignmentById);
+router.get('/assignments/:id', getAssignmentById);
 
 router.post(
-  '/',
+  '/assignments/',
   validate(createAssignmentSchema),
   createAssignment
 );
 router.put(
-  '/:id',
+  '/assignments/:id',
   validate(updateAssignmentSchema),
   //@ts-ignore
   updateAssignment
 );
 
-router.delete('/:id', deleteAssignment);
+router.delete('/assignments/:id', deleteAssignment);
 
 export default router;

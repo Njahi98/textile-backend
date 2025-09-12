@@ -6,7 +6,7 @@ import { aiInsightsRateLimit } from '../middleware/rateLimiter';
 const router = Router();
 
 router.get(
-  '/',
+  '/insights/',
   isAuthenticated,
   aiInsightsRateLimit,
   getAIInsights

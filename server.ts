@@ -66,16 +66,18 @@ app.use('/api/auth',
   process.env.NODE_ENV === 'production' ? authLimiter : [],
   authRoutes
 );
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/workers', workerRoutes);
-app.use('/api/production-lines', productionLineRoutes);
-app.use('/api/assignments', assignmentRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/performance', performanceRecordRoutes);
-app.use('/api/settings/account', accountRoutes);
-app.use('/api/chat', chatRoutes); 
-app.use('/api/insights', insightsRoutes);
+app.use('/api/', [
+  dashboardRoutes,
+  userRoutes,
+  workerRoutes,
+  productionLineRoutes,
+  assignmentRoutes,
+  productRoutes,
+  performanceRecordRoutes,
+  accountRoutes,
+  chatRoutes,
+  insightsRoutes
+]);
 
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -117,6 +119,10 @@ const gracefulShutdown = async (signal: string) => {
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 
+// Initial cleanup on server start
+cleanupExpiredSessions()
+  .then(() => console.log('Initial expired sessions cleaned up'))
+  .catch(error => console.error('Error in initial cleanup:', error));
 // Cleanup expired sessions every 24 hours
 setInterval(async () => {
   try {

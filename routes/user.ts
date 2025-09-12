@@ -13,10 +13,10 @@ import { createUserSchema, updateUserSchema } from '../utils/validation';
 const router = express.Router();
 
 router.use(isAuthenticated);
-router.get('/',requireAdminOrSuperAdmin, getAllUsers);
-router.get('/:id',requireAdminOrSuperAdmin, getUserById);
-router.post('/',requireSuperAdmin, validate(createUserSchema), createUser);
-router.put('/:id',requireSuperAdmin, validate(updateUserSchema), updateUser);
-router.delete('/:id',requireSuperAdmin, deleteUser);
+router.get('/users/',requireAdminOrSuperAdmin, getAllUsers);
+router.get('/users/:id',requireAdminOrSuperAdmin, getUserById);
+router.post('/users/',requireSuperAdmin, validate(createUserSchema), createUser);
+router.put('/users/:id',requireSuperAdmin, validate(updateUserSchema), updateUser);
+router.delete('/users/:id',requireSuperAdmin, deleteUser);
 
 export default router;
