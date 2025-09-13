@@ -157,7 +157,7 @@ export const login = async (
         password: true,
         role: true,
         status: true,
-        createdAt: true,
+        avatarUrl:true,
       },
     });
 
@@ -198,6 +198,7 @@ export const login = async (
         email: user.email,
         username: user.username,
         role: user.role,
+        avatarUrl: user.avatarUrl
       },
     });
   } catch (error) {

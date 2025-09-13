@@ -1,33 +1,34 @@
 import rateLimit from "express-rate-limit";
 import { Request, Response, NextFunction } from 'express';
 
-// General API rate limiting
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 300, // 300 requests per windowMs
   message: {
     error: 'Too many requests from this IP, please try again later.',
   },
   standardHeaders: true,
   legacyHeaders: false,
+  // Skip health check
+  skip: (req) => {
+    return req.url === '/api/health';
+  },
 });
 
-// Stricter rate limiting for auth endpoints
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 requests per windowMs for auth
+  max: 8, // 8 requests per windowMs
   message: {
     error: 'Too many authentication attempts, please try again later.',
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skipSuccessfulRequests: true, // Don't count successful requests
+  skipSuccessfulRequests: true,
 });
 
-// Rate limiting for image operations
 export const imageUploadLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // Limit each IP to 20 requests per windowMs
+  max: 15, // 15 requests per windowMs
   message: {
     error: 'Too many image upload attempts, please try again later.',
   },

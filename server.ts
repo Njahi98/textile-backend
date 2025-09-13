@@ -10,6 +10,8 @@ import morgan from 'morgan';
 import { apiLimiter, authLimiter } from './middleware/rateLimiter';
 import SocketService from './utils/socketService';
 import { cleanupExpiredSessions } from './utils/sessionManager';
+import compression from 'compression';
+import helmet from 'helmet';
 
 import authRoutes from './routes/auth';
 import dashboardRoutes from './routes/dashboard';
@@ -24,6 +26,10 @@ import chatRoutes from './routes/chat';
 import insightsRoutes from './routes/insights';
 
 dotenv.config();
+
+if (process.env.NODE_ENV === 'production' && !process.env.FRONTEND_URL) {
+  throw new Error('FRONTEND_URL environment variable is required in production');
+}
 
 const app = express();
 const server = createServer(app);
@@ -46,6 +52,32 @@ declare global {
 }
 global.socketService = socketService;
 
+if (process.env.NODE_ENV === 'production') {
+  app.use(compression({
+    filter: (req, res) => {
+      if (req.path.startsWith('/api/auth')) {
+        return false;
+      }
+      return compression.filter(req, res);
+    },
+  }));
+
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        // Allow WebSocket connections and frontend API calls
+        "connect-src": ["'self'", "ws:", "wss:", process.env.FRONTEND_URL!],
+        // Allow images from Cloudinary
+        "img-src": ["'self'", "data:", "https://res.cloudinary.com"],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  }));
+
+  app.use(apiLimiter);
+}
+
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
@@ -56,11 +88,17 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-if (process.env.NODE_ENV === 'production') {
-  app.use(apiLimiter);
-}
-
-app.use(morgan('dev'));
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    services: {
+      database: 'connected',
+      websocket: 'connected',
+      onlineUsers: socketService.getOnlineUsers().length,
+    },
+  });
+});
 
 app.use('/api/auth',
   process.env.NODE_ENV === 'production' ? authLimiter : [],
@@ -76,20 +114,8 @@ app.use('/api/', [
   performanceRecordRoutes,
   accountRoutes,
   chatRoutes,
-  insightsRoutes
+  insightsRoutes,
 ]);
-
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    services: {
-      database: 'connected',
-      websocket: 'connected',
-      onlineUsers: socketService.getOnlineUsers().length
-    }
-  });
-});
 
 app.use((req, res) => {
   res.status(404).json({
