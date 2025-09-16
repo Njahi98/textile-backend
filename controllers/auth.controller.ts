@@ -14,6 +14,8 @@ import {
   revokeAllUserSessions,
   cleanupExpiredSessions 
 } from '../utils/sessionManager';
+import { OAuth2Client } from 'google-auth-library';
+
 
 if (!process.env.JWT_SECRET) {
   const error = new Error('JWT_SECRET is not configured') as CustomError;
@@ -35,6 +37,11 @@ const ACCESS_TOKEN_EXPIRES_IN = '15m';
 const REFRESH_TOKEN_EXPIRES_IN = '7d'; 
 const ACCESS_COOKIE_MAX_AGE = 15 * 60 * 1000; 
 const REFRESH_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+
+const googleClient = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+);
 
 // Helper function to generate token pair and store refresh token in database
 const generateTokenPair = async (userId: number, req: Request) => {
@@ -446,6 +453,132 @@ export const getCurrentUser = (req: AuthenticatedRequest, res: Response, next: N
       user: req.user
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+export const googleLogin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { credential, clientId } = req.body;
+
+    if (!credential) {
+      res.status(400).json({
+        error: 'Missing credential',
+        message: 'Google credential is required'
+      });
+      return;
+    }
+
+    // Verify the Google token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload) {
+      res.status(400).json({
+        error: 'Invalid token',
+        message: 'Invalid Google credential'
+      });
+      return;
+    }
+
+    const { sub: googleId, email, name, picture, given_name, family_name } = payload;
+
+    if (!email) {
+      res.status(400).json({
+        error: 'Email required',
+        message: 'Email is required from Google account'
+      });
+      return;
+    }
+
+    let user = await prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        role: true,
+        status: true,
+        avatarUrl: true,
+        googleId: true,
+      },
+    });
+
+    if (user) {
+      // User exists - check if they have Google ID linked
+      if (!user.googleId) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { googleId },
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            role: true,
+            status: true,
+            avatarUrl: true,
+            googleId: true,
+          },
+        });
+      }
+
+      if (user.status !== 'active') {
+        res.status(403).json({
+          error: 'AccountInactive',
+          message: 'Your account is currently ' + user.status + ' and cannot be accessed.'
+        });
+        return;
+      }
+    } else {
+      // Create new user from Google account
+      const username = email.split('@')[0] + '_' + Date.now().toString().slice(-4);
+      
+      user = await prisma.user.create({
+        data: {
+          email,
+          username,
+          firstName: given_name || name?.split(' ')[0],
+          lastName: family_name || name?.split(' ').slice(1).join(' '),
+          avatarUrl: picture,
+          googleId,
+          password: '', // Empty password for Google users
+        },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          role: true,
+          status: true,
+          avatarUrl: true,
+          googleId: true,
+        },
+      });
+    }
+
+    // Generate tokens
+    const { accessToken, refreshToken } = await generateTokenPair(user.id, req);
+    setAuthCookies(res, accessToken, refreshToken);
+
+    res.json({
+      success: true,
+      message: 'Google login successful',
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+        avatarUrl: user.avatarUrl
+      },
+    });
+  } catch (error) {
+    console.error('Google login error:', error);
     next(error);
   }
 };

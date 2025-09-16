@@ -251,3 +251,9 @@ export type SendMessageRequest = z.infer<typeof sendMessageSchema>;
 export type MarkNotificationsReadRequest = z.infer<typeof markNotificationsReadSchema>;
 export type SearchUsersRequest = z.infer<typeof searchUsersSchema>;
 export type PaginationRequest = z.infer<typeof PaginationSchema>;
+
+export const googleLoginSchema = z.object({
+  credential: z.string().min(1, 'Google credential is required'),
+});
+
+export type GoogleLoginRequest = z.infer<typeof googleLoginSchema>;

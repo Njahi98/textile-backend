@@ -38,6 +38,8 @@ model User {
   role           Role     @default(USER)
   avatarUrl      String? // Cloudinary image URL
   avatarPublicId String? // Cloudinary public_id for management
+  googleId       String?  @unique 
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
