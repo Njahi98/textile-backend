@@ -142,7 +142,7 @@ export const getAIInsights = async (
         const performanceScore = Math.max(0, 100 - Number(metric._avg.errorRate || 0));
 
         return {
-          worker: worker || { id: metric.workerId, name: 'Unknown Worker', role: undefined },
+          worker: worker || { id: metric.workerId, name: 'Unknown Worker', role: null },
           totalProduction: Number(metric._sum.piecesMade || 0),
           avgErrorRate: Number(metric._avg.errorRate || 0),
           avgTimeTaken: Number(metric._avg.timeTaken || 0),
@@ -166,7 +166,7 @@ export const getAIInsights = async (
           : 0;
 
         return {
-          productionLine: productionLine || { id: metric.productionLineId, name: 'Unknown Line', targetOutput: undefined },
+          productionLine: productionLine || { id: metric.productionLineId, name: 'Unknown Line', targetOutput: null },
           totalProduction,
           avgErrorRate: Number(metric._avg.errorRate || 0),
           avgTimeTaken: Number(metric._avg.timeTaken || 0),

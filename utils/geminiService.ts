@@ -8,21 +8,26 @@ interface InsightData {
     efficiency: number;
   };
   workerMetrics: Array<{
-    worker: { id: number; name: string; role?: string };
+    worker: { id: number; name: string; role: string|null };
     totalProduction: number;
     avgErrorRate: number;
+    avgTimeTaken: number;
+    recordCount: number; 
     performanceScore: number;
   }>;
   productionLineMetrics: Array<{
-    productionLine: { id: number; name: string; targetOutput?: number };
+    productionLine: { id: number; name: string; targetOutput: number|null };
     totalProduction: number;
     efficiency: number;
     avgErrorRate: number;
+    avgTimeTaken: number;
+    recordCount: number; 
   }>;
   trends: Array<{
     date: string;
     production: number;
     errorRate: number;
+    timeTaken: number;
   }>;
 }
 

@@ -476,7 +476,7 @@ export const googleLogin = async (
     // Verify the Google token
     const ticket = await googleClient.verifyIdToken({
       idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: process.env.GOOGLE_CLIENT_ID!,
     });
 
     const payload = ticket.getPayload();
@@ -544,9 +544,9 @@ export const googleLogin = async (
         data: {
           email,
           username,
-          firstName: given_name || name?.split(' ')[0],
-          lastName: family_name || name?.split(' ').slice(1).join(' '),
-          avatarUrl: picture,
+          firstName: given_name ?? name?.split(' ')[0] ?? null,
+          lastName: family_name ?? name?.split(' ').slice(1).join(' ') ?? null,
+          avatarUrl: picture ?? null,
           googleId,
           password: '', // Empty password for Google users
         },

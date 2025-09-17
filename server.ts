@@ -88,6 +88,10 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
+if(process.env.NODE_ENV !== 'production'){
+  app.use(morgan('dev'));
+}
+
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',

@@ -2,12 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../server';
 import { AuthenticatedRequest } from '../types';
 import { uploadFileToCloudinary } from '../utils/imageUpload';
+import { CreateConversationRequest } from '@/utils/validation';
 
-interface CreateConversationData {
-  name?: string;
-  participantIds: number[];
-  isGroup: boolean;
-}
 
 // Extend AuthenticatedRequest to include validated query
 interface ValidatedRequest extends AuthenticatedRequest {
@@ -224,7 +220,7 @@ export const getConversationMessages = async (
 };
 
 export const createConversation = async (
-  req: Request<{}, {}, CreateConversationData>,
+  req: Request<{}, {}, CreateConversationRequest>,
   res: Response,
   next: NextFunction
 ): Promise<void> => {

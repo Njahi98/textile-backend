@@ -224,7 +224,7 @@ export const PaginationSchema = z.object({
 }));
 
 export const createConversationSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
+  name: z.string().min(1).max(100).optional().transform((val) => val ?? null),
   participantIds: z.array(z.number().int().positive()).min(1).max(50),
   isGroup: z.boolean(),
 });
