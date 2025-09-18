@@ -75,10 +75,11 @@ class GeminiService {
           topK: 40,
         }
       });
-      
+      if (!response.text) {
+      return this.generateFallbackInsights(data);
+    }
       return this.parseGeminiResponse(response.text, data);
     } catch (error) {
-      console.error('Gemini API Error:', error);
       throw new Error('Failed to generate AI insights');
     }
   }
@@ -182,7 +183,7 @@ Provide 3-5 actionable recommendations and 0-3 alerts if issues found.
       recommendations: [
         {
           category: 'quality',
-          priority: avgErrorRate > 10 ? 'high' : 'medium',
+          priority: (avgErrorRate > 10 ? 'high' : 'medium') as 'high' | 'medium' | 'low',
           title: 'Monitor Error Rates',
           description: `Current error rate is ${avgErrorRate.toFixed(1)}%. ${avgErrorRate > 5 ? 'Focus on quality control measures.' : 'Maintain current quality standards.'}`,
           impact: 'Improved product quality and reduced waste'

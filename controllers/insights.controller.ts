@@ -1,14 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../server';
 import GeminiService from '../utils/geminiService';
+import { InsightsQueryInput } from '../types';
 
-interface InsightsQueryInput {
-  startDate?: string;
-  endDate?: string;
-  workerId?: string;
-  productionLineId?: string;
-  productId?: string;
-}
 
 export const getAIInsights = async (
   req: Request<{}, {}, {}, InsightsQueryInput>,

@@ -21,4 +21,11 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
+export interface InsightsQueryInput {
+  startDate?: string;
+  endDate?: string;
+  workerId?: string;
+  productionLineId?: string;
+  productId?: string;
+}
 
