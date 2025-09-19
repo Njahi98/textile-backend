@@ -5,7 +5,7 @@ This is the backend for a textile management system, built with Node.js, Express
 ## Features
 
 ### Authentication & Security
-- JWT authentication with refresh tokens and role-based access (USER, ADMIN, SUPERADMIN)
+- JWT authentication/Google Login authentication with refresh tokens and role-based access (USER, ADMIN, SUPERADMIN)
 - Session management with device tracking and automatic cleanup
 - Password reset via email with Google SMTP integration
 - Rate limiting and CORS protection
@@ -33,6 +33,9 @@ This is the backend for a textile management system, built with Node.js, Express
 - Message read receipts and real-time user presence
 - Push notifications for messages and system alerts
 
+### Security & Compliance
+- Comprehensive audit logging system (tracks user actions, exports, and system events for accountability)
+
 ### Additional Features
 - Dashboard with comprehensive metrics and charts
 - Account management with profile updates
@@ -50,6 +53,7 @@ This is the backend for a textile management system, built with Node.js, Express
   - `/api/insights` – AI Analytics, reports, dashboard KPIs
   - `/api/settings/account` – Account settings (password update, account information update, avatar update)
   - `/api/notifications` – in-Dashboard Notifications, mark as read/unread
+  - `/api/audit-logs` – Audit logging system
 
 ### Setup
 1. Install dependencies:
@@ -70,6 +74,9 @@ This is the backend for a textile management system, built with Node.js, Express
    - `CLOUDINARY_CLOUD_NAME` – Cloudinary Cloud name for uploading images
    - `CLOUDINARY_API_KEY` – Cloudinary API Key for uploading images
    - `CLOUDINARY_API_SECRET` – Cloudinary API Secret for uploading images
+   - `GOOGLE_CLIENT_ID` – Google OAuth 2.0 Client ID for login via Google  
+   - `GOOGLE_CLIENT_SECRET` – Google OAuth 2.0 Client Secret for login via Google  
+
 3. Run migrations:
    ```bash
    npx prisma init --datasource-provider postgresql --output ../generated/prisma
