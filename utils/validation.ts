@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AuditAction, AuditResource } from '../generated/prisma';
 
 const passwordSchema = z
   .string()
@@ -257,3 +258,51 @@ export const googleLoginSchema = z.object({
 });
 
 export type GoogleLoginRequest = z.infer<typeof googleLoginSchema>;
+
+
+// Audit log query schema for filtering and pagination
+export const auditLogQuerySchema = z.object({
+  page: z.string().optional().transform(val => val ? parseInt(val, 10) : 1),
+  limit: z.string().optional().transform(val => val ? Math.min(parseInt(val, 10) || 50, 100) : 50),
+  startDate: z.string().optional().refine(val => !val || !isNaN(Date.parse(val)), {
+    message: 'Invalid start date format'
+  }),
+  endDate: z.string().optional().refine(val => !val || !isNaN(Date.parse(val)), {
+    message: 'Invalid end date format'
+  }),
+  userId: z.string().optional().transform(val => val ? parseInt(val, 10) : undefined),
+  action: z.nativeEnum(AuditAction).optional(),
+  resource: z.nativeEnum(AuditResource).optional(),
+  // Make search more permissive - allow 1 character minimum but still validate on backend
+  search: z.string().optional().refine(val => !val || val.trim().length >= 1, {
+    message: 'Search term must be at least 1 character long'
+  }).transform(val => val?.trim() || undefined),
+}).refine(data => {
+  if (data.startDate && data.endDate) {
+    const start = new Date(data.startDate);
+    const end = new Date(data.endDate);
+    return start <= end;
+  }
+  return true;
+}, {
+  message: 'Start date must be before or equal to end date',
+  path: ['startDate']
+});
+
+// Audit cleanup query schema
+export const auditCleanupQuerySchema = z.object({
+  days: z.string().optional().transform(val => {
+    const days = val ? parseInt(val, 10) : 365;
+    return Math.max(days, 30); // Minimum 30 days to keep
+  }),
+});
+
+// Audit stats query schema
+export const auditStatsQuerySchema = z.object({
+  days: z.string().optional().transform(val => {
+    const parsed = val ? parseInt(val, 10) : 30;
+    // Clamp between 1 and 365 days
+    const safe = Number.isFinite(parsed) ? parsed : 30;
+    return Math.min(Math.max(safe, 1), 365);
+  }),
+});

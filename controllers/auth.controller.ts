@@ -15,6 +15,7 @@ import {
   cleanupExpiredSessions 
 } from '../utils/sessionManager';
 import { OAuth2Client } from 'google-auth-library';
+import AuditService from '../utils/auditService';
 
 
 if (!process.env.JWT_SECRET) {
@@ -197,6 +198,12 @@ export const login = async (
     const { accessToken, refreshToken } = await generateTokenPair(user.id, req);
     setAuthCookies(res, accessToken, refreshToken);
 
+    // Log successful login
+    await AuditService.logAuth('LOGIN', user.id, req, {
+      loginMethod: 'email',
+      userAgent: req.get('User-Agent'),
+    });
+
     res.json({
       success: true,
       message: 'Login successful',
@@ -319,9 +326,21 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Get user info before revoking session for audit logging
+    const sessionData = await validateUserSession(refreshToken);
+    const userId = sessionData?.userId;
+
     // Revoke the session from database
     await revokeUserSession(refreshToken);
     clearAuthCookies(res);
+
+    // Log logout if we have user info
+    if (userId) {
+      await AuditService.logAuth('LOGOUT', userId, req, {
+        logoutMethod: 'manual',
+        userAgent: req.get('User-Agent'),
+      });
+    }
     
     res.status(200).json({ 
       success: true,
@@ -565,6 +584,12 @@ export const googleLogin = async (
     // Generate tokens
     const { accessToken, refreshToken } = await generateTokenPair(user.id, req);
     setAuthCookies(res, accessToken, refreshToken);
+
+    // Log successful Google login
+    await AuditService.logAuth('LOGIN', user.id, req, {
+      loginMethod: 'google',
+      userAgent: req.get('User-Agent'),
+    });
 
     res.json({
       success: true,

@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from 'server';
+import AuditService from '../utils/auditService';
+import { AuditResource } from '../generated/prisma';
+import { AuthenticatedRequest } from '../types';
 import { parse } from 'csv-parse/sync';
 
 
@@ -342,7 +345,7 @@ export const deleteWorker = async (
 };
 
 export const importWorkers = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -503,6 +506,28 @@ export const importWorkers = async (
           error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
+    }
+
+    // Explicitly log IMPORT action for the batch
+    try {
+      if (req.user) {
+        await AuditService.logImportExport(
+          'IMPORT',
+          AuditResource.WORKER,
+          req.user.id,
+          req,
+          {
+            totalRows: results.total,
+            imported: results.success.length,
+            errors: results.errors.length,
+            sampleSuccess: results.success.slice(0, 3).map(s => s.worker?.id),
+            sampleErrors: results.errors.slice(0, 3),
+          },
+          `Imported ${results.success.length} workers (${results.errors.length} errors)`
+        );
+      }
+    } catch (auditError) {
+      console.error('Audit log (import) error:', auditError);
     }
 
     res.json({

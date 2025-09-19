@@ -24,6 +24,8 @@ import performanceRecordRoutes from './routes/performanceRecord';
 import accountRoutes from './routes/account';
 import chatRoutes from './routes/chat';
 import insightsRoutes from './routes/insights';
+import auditRoutes from './routes/audit';
+import { auditLogger } from './middleware/auditMiddleware';
 
 dotenv.config();
 
@@ -104,6 +106,8 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+app.use('/api/', auditLogger());
+
 app.use('/api/auth',
   process.env.NODE_ENV === 'production' ? authLimiter : [],
   authRoutes
@@ -119,6 +123,7 @@ app.use('/api/', [
   accountRoutes,
   chatRoutes,
   insightsRoutes,
+  auditRoutes,
 ]);
 
 app.use((req, res) => {

@@ -49,6 +49,7 @@ model User {
   MessageReadReceipt      MessageReadReceipt[]
   Notification            Notification[]
   UserSession             UserSession[]
+  AuditLog                AuditLog[]
 }
 
 model Worker {
@@ -242,4 +243,49 @@ model UserSession {
   @@index([userId])
   @@index([refreshToken])
   @@index([expiresAt])
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  EXPORT
+  IMPORT
+}
+
+enum AuditResource {
+  USER
+  WORKER
+  PRODUCT
+  PRODUCTION_LINE
+  ASSIGNMENT
+  PERFORMANCE_RECORD
+  AUTH
+  ACCOUNT
+}
+
+model AuditLog {
+  id          Int           @id @default(autoincrement())
+  userId      Int?          // The user who performed the action
+  action      AuditAction   // What action was performed
+  resource    AuditResource // What type of resource was affected
+  resourceId  String?       // ID of the specific resource (as string to handle different ID types)
+  tableName   String?       // Actual table name for database operations
+  oldValues   Json?         // Previous values (for updates/deletes)
+  newValues   Json?         // New values (for creates/updates)
+  metadata    Json?         // Additional context (IP, user agent, etc.)
+  description String?       // Human readable description
+  ipAddress   String?       // IP address of the user
+  userAgent   String?       // User agent string
+  createdAt   DateTime      @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt])
+  @@index([userId, createdAt])
 }
