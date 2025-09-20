@@ -5,6 +5,7 @@ import { uploadImageToCloudinary, deleteImageFromCloudinary } from '../utils/ima
 export const getAllProducts = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const products = await prisma.product.findMany({
+      where: { isDeleted: false },
       orderBy: { name: 'asc' },
     });
     res.json({ success: true, products });
@@ -21,9 +22,13 @@ export const getProductById = async (req: Request<{ id: string }>, res: Response
       return;
     }
     const product = await prisma.product.findUnique({
-      where: { id },
+      where: { id, isDeleted: false },
       include: {
         performanceRecords: {
+          where: {
+            worker: { isDeleted: false },
+            productionLine: { isDeleted: false },
+          },
           include: { worker: true, productionLine: true },
           orderBy: { date: 'desc' },
           take: 20,
@@ -45,6 +50,20 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
     const { name, code, description, category, unitPrice } = req.body;
     let imageUrl = null;
     let imagePublicId = null;
+
+    if (code) {
+      const existingProduct = await prisma.product.findFirst({
+        where: { code },
+      });
+
+      if (existingProduct) {
+        res.status(409).json({
+          error: 'CODE_EXISTS',
+          message: 'A product with this code already exists'
+        });
+        return;
+      }
+    }
 
     // Handle image upload if provided
     if (req.file) {
@@ -94,7 +113,7 @@ export const updateProduct = async (req: Request<{ id: string }>, res: Response,
     // Get existing product to handle image replacement
     const existingProduct = await prisma.product.findUnique({
       where: { id },
-      select: { imagePublicId: true }
+      select: { imagePublicId: true, code: true }
     });
 
     if (!existingProduct) {
@@ -105,6 +124,20 @@ export const updateProduct = async (req: Request<{ id: string }>, res: Response,
     const { name, code, description, category, unitPrice, isActive } = req.body;
     let imageUrl = undefined;
     let imagePublicId = undefined;
+
+      if (code && code !== existingProduct.code) {
+        const codeExists = await prisma.product.findUnique({
+          where: { code },
+        });
+
+      if (codeExists) {
+        res.status(409).json({
+          error: 'CODE_EXISTS',
+          message: 'A product with this code already exists'
+        });
+        return;
+      }
+    }
 
     // Handle new image upload
     if (req.file) {
@@ -160,26 +193,37 @@ export const deleteProduct = async (req: Request<{ id: string }>, res: Response,
       return;
     }
 
-    // Get product to delete associated image
-    const product = await prisma.product.findUnique({
-      where: { id },
-      select: { imagePublicId: true }
-    });
+      const existingProduct = await prisma.product.findUnique({
+        where: { id },
+        select: { imagePublicId: true, code: true }
+      });
 
-    if (!product) {
+    if (!existingProduct) {
       res.status(404).json({ error: 'NOT_FOUND', message: 'Product not found' });
       return;
     }
 
-    // Delete from database
-    await prisma.product.delete({ where: { id } });
+    await prisma.product.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        isActive: false,
+        code: `deleted_${existingProduct.code}_${new Date().toISOString()}`,
+        imagePublicId: null,
+        imageUrl: null,
+      }
+    });
 
-    // Delete image from Cloudinary if it exists
-    if (product.imagePublicId) {
-      await deleteImageFromCloudinary(product.imagePublicId);
+    if (existingProduct.imagePublicId) {
+      try {
+        await deleteImageFromCloudinary(existingProduct.imagePublicId);
+      } catch (error) {
+        console.error('Failed to delete image from Cloudinary:', error);
+      }
     }
 
-    res.json({ success: true, message: 'Product deleted' });
+    res.json({ success: true, message: 'Product deleted successfully' });
   } catch (error) {
     next(error);
   }

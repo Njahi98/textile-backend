@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../server';
 
-// production lines with capacity, current assignments, daily output, and performance metrics
 export const getAllProductionLines = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const today = new Date();
@@ -10,6 +9,7 @@ export const getAllProductionLines = async (req: Request, res: Response, next: N
     tomorrow.setDate(today.getDate() + 1);
 
     const productionLines = await prisma.productionLine.findMany({
+      where: { isDeleted: false },
       include: {
         assignments: {
           include: { worker: true },
@@ -26,7 +26,7 @@ export const getAllProductionLines = async (req: Request, res: Response, next: N
     // For each line, calculate daily output and performance metrics
     const linesWithMetrics = await Promise.all(
       productionLines.map(async (line) => {
-        // Count assignments for today
+        // Count assignments for today (only from non-deleted workers)
         const currentAssignments = await prisma.assignment.count({
           where: {
             productionLineId: line.id,
@@ -34,9 +34,10 @@ export const getAllProductionLines = async (req: Request, res: Response, next: N
               gte: today,
               lt: tomorrow,
             },
+            worker: { isDeleted: false },
           },
         });
-        // Calculate daily output (sum of piecesMade for today)
+        // Calculate daily output (sum of piecesMade for today, only from non-deleted workers and products)
         const dailyOutput = await prisma.performanceRecord.aggregate({
           _sum: { piecesMade: true },
           where: {
@@ -45,9 +46,11 @@ export const getAllProductionLines = async (req: Request, res: Response, next: N
               gte: today,
               lt: tomorrow,
             },
+            worker: { isDeleted: false },
+            product: { isDeleted: false },
           },
         });
-        // Performance metrics: avg errorRate, avg timeTaken for today
+        // Performance metrics: avg errorRate, avg timeTaken for today (only from non-deleted workers and products)
         const perfMetrics = await prisma.performanceRecord.aggregate({
           _avg: { errorRate: true, timeTaken: true },
           where: {
@@ -56,6 +59,8 @@ export const getAllProductionLines = async (req: Request, res: Response, next: N
               gte: today,
               lt: tomorrow,
             },
+            worker: { isDeleted: false },
+            product: { isDeleted: false },
           },
         });
         return {
@@ -83,7 +88,7 @@ export const getProductionLineById = async (req: Request<{ id: string }>, res: R
       return;
     }
     const line = await prisma.productionLine.findUnique({
-      where: { id },
+      where: { id, isDeleted: false },
       include: {
         assignments: {
           include: { worker: true },
@@ -113,6 +118,7 @@ export const getProductionLineById = async (req: Request<{ id: string }>, res: R
           gte: today,
           lt: tomorrow,
         },
+        worker: { isDeleted: false },
       },
     });
     const dailyOutput = await prisma.performanceRecord.aggregate({
@@ -123,6 +129,8 @@ export const getProductionLineById = async (req: Request<{ id: string }>, res: R
           gte: today,
           lt: tomorrow,
         },
+        worker: { isDeleted: false },
+        product: { isDeleted: false },
       },
     });
     const perfMetrics = await prisma.performanceRecord.aggregate({
@@ -133,6 +141,8 @@ export const getProductionLineById = async (req: Request<{ id: string }>, res: R
           gte: today,
           lt: tomorrow,
         },
+        worker: { isDeleted: false },
+        product: { isDeleted: false },
       },
     });
     res.json({
@@ -155,6 +165,19 @@ export const getProductionLineById = async (req: Request<{ id: string }>, res: R
 export const createProductionLine = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name, description, capacity, targetOutput, location } = req.body;
+    
+    const existingLine = await prisma.productionLine.findFirst({
+      where: { name },
+    });
+
+    if (existingLine) {
+      res.status(409).json({
+        error: 'NAME_EXISTS',
+        message: 'A production line with this name already exists'
+      });
+      return;
+    }
+
     const productionLine = await prisma.productionLine.create({
       data: {
         name,
@@ -177,7 +200,34 @@ export const updateProductionLine = async (req: Request<{ id: string }>, res: Re
       res.status(400).json({ error: 'INVALID_ID', message: 'Invalid production line ID' });
       return;
     }
+
+    const existingLine = await prisma.productionLine.findUnique({
+      where: { id},
+      select: { name: true }
+    });
+
+    if (!existingLine) {
+      res.status(404).json({ error: 'NOT_FOUND', message: 'Production line not found' });
+      return;
+    }
+
     const { name, description, capacity, targetOutput, location, isActive } = req.body;
+
+    // Check if production line name already exists (if being updated)
+    if (name && name !== existingLine.name) {
+      const nameExists = await prisma.productionLine.findFirst({
+        where: { name, isDeleted: false },
+      });
+
+      if (nameExists) {
+        res.status(409).json({
+          error: 'NAME_EXISTS',
+          message: 'A production line with this name already exists'
+        });
+        return;
+      }
+    }
+
     const productionLine = await prisma.productionLine.update({
       where: { id },
       data: {
@@ -224,8 +274,28 @@ export const deleteProductionLine = async (req: Request<{ id: string }>, res: Re
       res.status(400).json({ error: 'INVALID_ID', message: 'Invalid production line ID' });
       return;
     }
-    await prisma.productionLine.delete({ where: { id } });
-    res.json({ success: true, message: 'Production line deleted' });
+
+      const existingLine = await prisma.productionLine.findUnique({
+        where: { id },
+        select: { name: true }
+      });
+
+    if (!existingLine) {
+      res.status(404).json({ error: 'NOT_FOUND', message: 'Production line not found' });
+      return;
+    }
+
+    await prisma.productionLine.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        isActive: false,
+        name: `deleted_${existingLine.name}_${new Date().toISOString()}`,
+      }
+    });
+
+    res.json({ success: true, message: 'Production line deleted successfully' });
   } catch (error) {
     next(error);
   }

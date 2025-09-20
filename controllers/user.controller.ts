@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../server';
 import bcrypt from 'bcrypt';
 import { Role, Status } from 'generated/prisma';
+import { deleteImageFromCloudinary } from '@/utils/imageUpload';
 
 interface CreateUserData {
   email: string;
@@ -11,6 +12,8 @@ interface CreateUserData {
   lastName?: string;
   phone?: string;
   role?: Role;
+  isDeleted?:boolean;
+  deletedAt?:Date;
 }
 interface idParams{
   id:string;
@@ -25,6 +28,8 @@ interface UpdateUserData {
   role?: Role;
   password?: string;
   status:Status
+  isDeleted?:boolean;
+  deletedAt?:Date;
 }
 
 export const getAllUsers = async (
@@ -34,6 +39,7 @@ export const getAllUsers = async (
 ): Promise<void> => {
   try {
     const users = await prisma.user.findMany({
+      where:{ isDeleted:false },
       select: {
         id: true,
         email: true,
@@ -73,7 +79,7 @@ export const getUserById = async (
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: userId, isDeleted: false },
       select: {
         id: true,
         email: true,
@@ -215,7 +221,6 @@ export const updateUser = async (
       return;
     }
 
-    // Check if email already exists (if being updated)
     if (email && email !== existingUser.email) {
       const emailExists = await prisma.user.findUnique({
         where: { email },
@@ -230,7 +235,6 @@ export const updateUser = async (
       }
     }
 
-    // Check if username already exists (if being updated)
     if (username && username !== existingUser.username) {
       const usernameExists = await prisma.user.findUnique({
         where: { username },
@@ -245,7 +249,6 @@ export const updateUser = async (
       }
     }
 
-    // Check if phone already exists (if being updated)
     if (phone && phone !== existingUser.phone) {
       const phoneExists = await prisma.user.findUnique({
         where: { phone },
@@ -316,6 +319,7 @@ export const deleteUser = async (
 
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
+      select: { id: true, avatarPublicId: true, email: true, phone: true, username: true }
     });
 
     if (!existingUser) {
@@ -326,9 +330,41 @@ export const deleteUser = async (
       return;
     }
 
-    await prisma.user.delete({
+      if (existingUser.avatarPublicId) {
+      try {
+        await deleteImageFromCloudinary(existingUser.avatarPublicId);
+      } catch (error) {
+        console.error('Failed to delete avatar from Cloudinary:', error);
+      }
+    }
+
+    await prisma.user.update({
       where: { id: userId },
+      data:{
+        isDeleted:true,
+        deletedAt:new Date(),
+        status:Status.inactive,
+        email:`deleted_${existingUser.email}_${new Date().toISOString()}`,
+        username:`deleted_${existingUser.username}_${new Date().toISOString()}`,
+        phone:`deleted_${existingUser.phone}_${new Date().toISOString()}`,
+        avatarPublicId:null,
+        avatarUrl:null,
+        firstName:null,
+        lastName:null,
+        googleId:null,
+      }
     });
+
+    await prisma.userSession.updateMany({
+      where: { userId },
+      data: { isActive: false },
+    })
+
+    await prisma.conversationParticipant.updateMany({
+      where: { userId },
+      data: { isActive: false },
+    })
+    
 
     res.json({
       success: true,

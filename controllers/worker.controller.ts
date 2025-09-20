@@ -34,6 +34,7 @@ export const getAllWorkers = async (
 ): Promise<void> => {
   try {
     const workers = await prisma.worker.findMany({
+      where: { isDeleted: false },
       select: {
         id: true,
         name: true,
@@ -78,7 +79,7 @@ export const getWorkerById = async (
     }
 
     const worker = await prisma.worker.findUnique({
-      where: { id: workerId },
+      where: { id: workerId, isDeleted: false },
       select: {
         id: true,
         name: true,
@@ -98,10 +99,17 @@ export const getWorkerById = async (
           include: {
             productionLine: true,
           },
+          where: {
+            productionLine: { isDeleted: false },
+          },
           orderBy: { date: 'desc' },
           take: 20,
         },
         performanceRecords: {
+          where: {
+            product: { isDeleted: false },
+            productionLine: { isDeleted: false },
+          },
           orderBy: { date: 'desc' },
           take: 50,
         },
@@ -331,8 +339,14 @@ export const deleteWorker = async (
       });
       return;
     }
-    await prisma.worker.delete({
+    await prisma.worker.update({
       where: { id: workerId },
+      data:{isDeleted:true,
+        deletedAt:new Date(),
+        cin:`deleted_${existingWorker.cin}_${new Date().toISOString()}`,
+        email:null,
+        phone:null,
+      }
     });
 
     res.json({
@@ -427,7 +441,6 @@ export const importWorkers = async (
           continue;
         }
 
-        // Check for existing CIN
         const existingCin = await prisma.worker.findUnique({
           where: { cin: record.cin },
         });

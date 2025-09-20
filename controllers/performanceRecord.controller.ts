@@ -96,10 +96,14 @@ export const getAllPerformanceRecords = async (
     if (productionLineId) where.productionLineId = productionLineId;
     if (shift) where.shift = shift;
 
-    // Get performance records with pagination
     const [performanceRecords, totalCount] = await Promise.all([
       prisma.performanceRecord.findMany({
-        where,
+        where: {
+          ...where,
+          worker: { isDeleted: false },
+          product: { isDeleted: false },
+          productionLine: { isDeleted: false },
+        },
         include: {
           worker: {
             select: {
@@ -129,7 +133,14 @@ export const getAllPerformanceRecords = async (
         skip,
         take: limitNum,
       }),
-      prisma.performanceRecord.count({ where })
+      prisma.performanceRecord.count({ 
+        where: {
+          ...where,
+          worker: { isDeleted: false },
+          product: { isDeleted: false },
+          productionLine: { isDeleted: false },
+        }
+      })
     ]);
 
     res.status(200).json({
@@ -581,7 +592,10 @@ export const getPerformanceAnalytics = async (
       date: {
         gte: start,
         lte: end,
-      }
+      },
+      worker: { isDeleted: false },
+      product: { isDeleted: false },
+      productionLine: { isDeleted: false },
     };
 
     if (workerId) where.workerId = parseInt(workerId);

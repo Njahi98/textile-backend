@@ -49,10 +49,13 @@ export const getAllAssignments = async (
     if (shift) where.shift = shift;
     if (position) where.position = { contains: position, mode: 'insensitive' };
 
-    // Get assignments with pagination
     const [assignments, totalCount] = await Promise.all([
       prisma.assignment.findMany({
-        where,
+        where: {
+          ...where,
+          worker: { isDeleted: false },
+          productionLine: { isDeleted: false },
+        },
         select: {
           id: true,
           createdAt: true,
@@ -81,7 +84,13 @@ export const getAllAssignments = async (
         skip,
         take: limitNum,
       }),
-      prisma.assignment.count({ where })
+      prisma.assignment.count({ 
+        where: {
+          ...where,
+          worker: { isDeleted: false },
+          productionLine: { isDeleted: false },
+        }
+      })
     ]);
 
     res.status(200).json({

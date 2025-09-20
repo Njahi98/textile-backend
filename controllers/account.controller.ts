@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "server";
 import bcrypt from "bcrypt"
-import { Role, Status } from 'generated/prisma';
+import { Status } from 'generated/prisma';
 import { AuthenticatedRequest } from "../types";
 import { uploadImageToCloudinary, deleteImageFromCloudinary } from "../utils/imageUpload";
 
@@ -305,7 +305,7 @@ export const deleteAccount = async (
 
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
-      select: { avatarPublicId: true }
+      select: { avatarPublicId: true, email:true,phone:true,username:true,}
     });
 
     if (!existingUser) {
@@ -316,14 +316,40 @@ export const deleteAccount = async (
       return;
     }
 
-    // Delete avatar from Cloudinary if it exists
-    if (existingUser.avatarPublicId) {
-      await deleteImageFromCloudinary(existingUser.avatarPublicId);
+       if (existingUser.avatarPublicId) {
+      try {
+        await deleteImageFromCloudinary(existingUser.avatarPublicId);
+      } catch (error) {
+        console.error('Failed to delete avatar from Cloudinary:', error);
+      }
     }
 
-    await prisma.user.delete({
+    await prisma.user.update({
       where: { id: userId },
+      data:{
+        isDeleted:true,
+        deletedAt:new Date(),
+        status:Status.inactive,
+        email:`deleted_${existingUser.email}_${new Date().toISOString()}`,
+        username:`deleted_${existingUser.username}_${new Date().toISOString()}`,
+        phone:`deleted_${existingUser.phone}_${new Date().toISOString()}`,
+        avatarPublicId:null,
+        avatarUrl:null,
+        firstName:null,
+        lastName:null,
+        googleId:null,
+      }
     });
+
+    await prisma.userSession.updateMany({
+      where: { userId },
+      data: { isActive: false }
+    });
+
+      await prisma.conversationParticipant.updateMany({
+      where: { userId },
+      data: { isActive: false },
+    })
 
     res.json({
       success: true,

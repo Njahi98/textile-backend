@@ -40,6 +40,9 @@ model User {
   avatarPublicId String? // Cloudinary public_id for management
   googleId       String?  @unique 
 
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -59,6 +62,8 @@ model Worker {
   phone              String?             @unique
   email              String?             @unique
   role               String?
+  isDeleted          Boolean             @default(false)
+  deletedAt          DateTime?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   assignments        Assignment[]
@@ -71,6 +76,8 @@ model ProductionLine {
   description        String?
   capacity           Int?
   isActive           Boolean             @default(true)
+  isDeleted          Boolean             @default(false)
+  deletedAt          DateTime?
   targetOutput       Int?
   location           String?
   createdAt          DateTime            @default(now())
@@ -105,6 +112,8 @@ model Product {
   imageUrl           String? // Cloudinary image URL
   imagePublicId      String? // Cloudinary public_id for management
   isActive           Boolean             @default(true)
+  isDeleted          Boolean             @default(false)
+  deletedAt          DateTime?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   performanceRecords PerformanceRecord[]
