@@ -81,45 +81,51 @@ export const uploadFileToCloudinary = async (
       return 'raw'; // For documents, Excel, CSV files
     };
 
-    const getTransformations = () => {
-      if (isImage) {
-        return [
-          { width: 1200, height: 1200, crop: 'limit' },
-          { quality: 'auto' },
-          { format: 'auto' }
-        ];
-      }
-      if (isVideo) {
-        return [
-          { width: 1280, height: 720, crop: 'limit' },
-          { quality: 'auto' }
-        ];
-      }
-      return undefined; // No transformations for raw files
-    };
+      const getTransformations = (): any => {
+    if (isImage) {
+      return [
+        { width: 1200, height: 1200, crop: 'limit' },
+        { quality: 'auto' },
+        { format: 'auto' }
+      ];
+    }
+    if (isVideo) {
+      return [
+        { width: 1280, height: 720, crop: 'limit' },
+        { quality: 'auto' }
+      ];
+    }
+    return [];
+  };
 
-    cloudinary.uploader.upload_stream(
-      {
-        folder: folder,
-        resource_type: getResourceType(),
-        transformation: getTransformations(),
-        public_id: `${Date.now()}_${originalName.replace(/[^a-zA-Z0-9.]/g, '_')}`,
-      },
-      (error, result: UploadApiResponse | undefined) => {
-        if (error) {
-          reject(error);
-        } else if (result) {
-          resolve({
-            url: result.secure_url,
-            publicId: result.public_id,
-            fileName: originalName,
-            fileSize: result.bytes,
-            mimeType: mimeType
-          });
-        } else {
-          reject(new Error('Upload failed: no result returned'));
-        }
-      }
-    ).end(buffer);
+const uploadOptions: any = {
+  folder: folder,
+  resource_type: getResourceType(),
+  public_id: `${Date.now()}_${originalName.replace(/[^a-zA-Z0-9.]/g, '_')}`,
+};
+
+const transformations = getTransformations();
+if (transformations.length > 0) {
+  uploadOptions.transformation = transformations;
+}
+
+cloudinary.uploader.upload_stream(
+  uploadOptions,
+  (error, result: UploadApiResponse | undefined) => {
+    if (error) {
+      reject(error);
+    } else if (result) {
+      resolve({
+        url: result.secure_url,
+        publicId: result.public_id,
+        fileName: originalName,
+        fileSize: result.bytes,
+        mimeType: mimeType
+      });
+    } else {
+      reject(new Error('Upload failed: no result returned'));
+    }
+  }
+).end(buffer);
   });
 };

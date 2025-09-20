@@ -614,13 +614,13 @@ export const getPerformanceAnalytics = async (
 
     switch (groupBy) {
       case 'worker':
-        groupedData = await prisma.performanceRecord.groupBy({
-          by: ['workerId'],
-          where,
-          _sum: { piecesMade: true },
-          _avg: { errorRate: true, timeTaken: true },
-          _count: true,
-        });
+      groupedData = await prisma.performanceRecord.groupBy({
+        by: ['workerId'] as const,
+        where,
+        _sum: { piecesMade: true },
+        _avg: { errorRate: true, timeTaken: true },
+        _count: true,
+      } as any);
 
         // Add worker details
         for (let i = 0; i < groupedData.length; i++) {
@@ -634,12 +634,12 @@ export const getPerformanceAnalytics = async (
 
       case 'product':
         groupedData = await prisma.performanceRecord.groupBy({
-          by: ['productId'],
+          by: ['productId'] as const,
           where,
           _sum: { piecesMade: true },
           _avg: { errorRate: true, timeTaken: true },
           _count: true,
-        });
+        } as any);
 
         // Add product details
         for (let i = 0; i < groupedData.length; i++) {
@@ -653,12 +653,12 @@ export const getPerformanceAnalytics = async (
 
       case 'productionLine':
         groupedData = await prisma.performanceRecord.groupBy({
-          by: ['productionLineId'],
+          by: ['productionLineId'] as const,
           where,
           _sum: { piecesMade: true },
           _avg: { errorRate: true, timeTaken: true },
           _count: true,
-        });
+        } as any);
 
         // Add production line details
         for (let i = 0; i < groupedData.length; i++) {
@@ -672,14 +672,14 @@ export const getPerformanceAnalytics = async (
 
       case 'date':
       default:
-        groupedData = await prisma.performanceRecord.groupBy({
-          by: ['date'],
-          where,
-          _sum: { piecesMade: true },
-          _avg: { errorRate: true, timeTaken: true },
-          _count: true,
-          orderBy: { date: 'asc' },
-        });
+      groupedData = await prisma.performanceRecord.groupBy({
+        by: ['date'] as const,
+        where,
+        _sum: { piecesMade: true },
+        _avg: { errorRate: true, timeTaken: true },
+        _count: true,
+        orderBy: { date: 'asc' },
+      } as any);
         break;
     }
 

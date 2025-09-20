@@ -45,13 +45,14 @@ export const createUserSession = async (
   });
 
   // If user has 3 or more active sessions, remove the oldest one
-  if (activeSessions.length >= 3) {
-    const oldestSession = activeSessions[0];
+if (activeSessions.length >= 3) {
+  const oldestSession = activeSessions[0];
+  if (oldestSession) {
     await prisma.userSession.delete({
       where: { id: oldestSession.id }
     });
   }
-
+}
   // Create new session
   await prisma.userSession.create({
     data: {

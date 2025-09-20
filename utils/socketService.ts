@@ -30,7 +30,7 @@ class SocketService {
   private setupMiddleware() {
     this.io.use(async (socket: SocketWithAuth, next) => {
       try {
-        let token = '';
+        let token: string | undefined = '';
         
         // Try auth.token (manual) first
         token = socket.handshake.auth.token;
@@ -46,14 +46,13 @@ class SocketService {
           const cookies: { [key: string]: string } = {};
           socket.handshake.headers.cookie.split(';').forEach(cookie => {
             const parts = cookie.trim().split('=');
-            if (parts.length === 2) {
+            if (parts.length === 2 && parts[0] && parts[1]) {
               cookies[parts[0]] = decodeURIComponent(parts[1]);
             }
           });
           
           // Try accessToken first (primary authentication)
           token = cookies.accessToken;
-
         }
 
         if (!token) {
@@ -82,8 +81,14 @@ class SocketService {
     this.io.on('connection', (socket: SocketWithAuth) => {
       console.log(`User ${socket.user?.username} connected with socket ${socket.id}`);
       
+      // Ensure userId exists before proceeding
+      if (!socket.userId) {
+        socket.disconnect(true);
+        return;
+      }
+      
       // Track user socket connection
-      this.addUserSocket(socket.userId!, socket.id);
+      this.addUserSocket(socket.userId, socket.id);
       
       // Join user to their personal room for notifications
       socket.join(`user:${socket.userId}`);
@@ -91,6 +96,9 @@ class SocketService {
       // Handle joining conversation rooms
       socket.on('join_conversations', async (conversationIds: number[]) => {
         try {
+          // Early return if no userId
+          if (!socket.userId) return;
+          
           // Verify user is participant in these conversations
           const userConversations = await prisma.conversationParticipant.findMany({
             where: {
@@ -126,6 +134,8 @@ class SocketService {
 
       // Handle typing indicators
       socket.on('typing_start', (data) => {
+        if (!socket.userId) return;
+        
         socket.to(`conversation:${data.conversationId}`).emit('user_typing', {
           userId: socket.userId,
           username: socket.user?.username,
@@ -134,6 +144,8 @@ class SocketService {
       });
 
       socket.on('typing_stop', (data) => {
+        if (!socket.userId) return;
+        
         socket.to(`conversation:${data.conversationId}`).emit('user_stopped_typing', {
           userId: socket.userId,
           conversationId: data.conversationId,
@@ -159,7 +171,9 @@ class SocketService {
       // Handle disconnect
       socket.on('disconnect', (reason) => {
         console.log(`User ${socket.user?.username} disconnected: ${reason}`);
-        this.removeUserSocket(socket.userId!, socket.id);
+        if (socket.userId) {
+          this.removeUserSocket(socket.userId, socket.id);
+        }
       });
     });
   }
@@ -186,6 +200,12 @@ class SocketService {
     content: string;
     messageType?: 'TEXT' | 'IMAGE' | 'FILE';
   }) {
+    // Early return if no userId
+    if (!socket.userId) {
+      socket.emit('message_error', { error: 'Authentication required' });
+      return;
+    }
+
     const { conversationId, content, messageType = 'TEXT' } = data;
 
     // Verify user is participant in conversation
@@ -206,7 +226,7 @@ class SocketService {
     const message = await prisma.message.create({
       data: {
         conversationId,
-        senderId: socket.userId!,
+        senderId: socket.userId,
         content,
         messageType,
       },
@@ -268,6 +288,9 @@ class SocketService {
     conversationId: number;
     messageIds: number[];
   }) {
+    // Early return if no userId
+    if (!socket.userId) return;
+
     const { conversationId, messageIds } = data;
 
     // Verify user is participant
