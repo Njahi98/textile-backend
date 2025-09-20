@@ -89,6 +89,8 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+app.disable('x-powered-by')
+
 
 if(process.env.NODE_ENV !== 'production'){
   app.use(morgan('dev'));
