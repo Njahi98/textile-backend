@@ -15,7 +15,7 @@ const upload = multer({
   limits: {
     fileSize: 5 * 1024 * 1024,
   },
-    fileFilter: (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+fileFilter: (req: any, file: any, cb: any) => {
     if (file.mimetype === 'text/csv') {
       cb(null, true);
     } else {

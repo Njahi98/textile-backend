@@ -5,7 +5,7 @@ import { Request } from 'express';
 const storage = multer.memoryStorage();
 
 // File filter for images only (your existing filter)
-const imageFileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  const imageFileFilter = (req: any, file: any, cb: any) => {
   if (file.mimetype.startsWith('image/')) {
     cb(null, true);
   } else {
@@ -14,7 +14,7 @@ const imageFileFilter = (req: Request, file: Express.Multer.File, cb: multer.Fil
 };
 
 // File filter for chat files (images, videos, documents)
-const chatFileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  const chatFileFilter = (req: any, file: any, cb: any) => {
   const allowedTypes = [
     // Images
     'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
@@ -38,7 +38,7 @@ const chatFileFilter = (req: Request, file: Express.Multer.File, cb: multer.File
 };
 
 // File filter for CSV only (for your data import functionality)
-const csvFileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  const csvFileFilter = (req: any, file: any, cb: any) => {
   const allowedTypes = ['text/csv', 'application/vnd.ms-excel'];
   
   if (allowedTypes.includes(file.mimetype) || file.originalname.endsWith('.csv')) {

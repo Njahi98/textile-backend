@@ -28,21 +28,19 @@ declare module 'multer' {
   import { RequestHandler } from 'express';
   
   interface StorageEngine {
-    _handleFile(req: Express.Request, file: Express.Multer.File, cb: (error?: any, info?: Partial<Express.Multer.File>) => void): void;
-    _removeFile(req: Express.Request, file: Express.Multer.File, cb: (error: Error | null) => void): void;
+    _handleFile(req: any, file: any, cb: any): void;
+    _removeFile(req: any, file: any, cb: any): void;
   }
   
   interface Options {
     storage?: StorageEngine;
-    fileFilter?: (req: Express.Request, file: Express.Multer.File, cb: FileFilterCallback) => void;
+    fileFilter?: (req: any, file: any, cb: any) => void;
     limits?: {
       fileSize?: number;
       files?: number;
       [key: string]: any;
     };
   }
-  
-  type FileFilterCallback = (error: Error | null, acceptFile?: boolean) => void;
   
   function multer(options?: Options): {
     single(fieldname: string): RequestHandler;
@@ -55,6 +53,7 @@ declare module 'multer' {
   namespace multer {
     function memoryStorage(): StorageEngine;
     function diskStorage(options: any): StorageEngine;
+    type FileFilterCallback = (error: Error | null, acceptFile?: boolean) => void;
   }
   
   export = multer;
