@@ -1,5 +1,5 @@
 import { createWorker, deleteWorker, getAllWorkers, getWorkerById, importWorkers, updateWorker } from '@/controllers/worker.controller';
-import { isAuthenticated, requireAdmin } from '@/middleware/isAuthenticated';
+import { isAuthenticated } from '@/middleware/isAuthenticated';
 import { validate } from '@/middleware/validation';
 import { workerCreateSchema, workerUpdateSchema } from '@/utils/validation';
 import express from 'express';
@@ -15,7 +15,7 @@ const upload = multer({
   limits: {
     fileSize: 5 * 1024 * 1024,
   },
-  fileFilter: (req, file, cb) => {
+    fileFilter: (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
     if (file.mimetype === 'text/csv') {
       cb(null, true);
     } else {

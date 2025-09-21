@@ -1,5 +1,5 @@
 import { Request } from "express";
-import { Role } from "generated/prisma";
+import { Role } from "../generated/prisma";
 
 export interface JwtPayload {
   userId: number;
@@ -19,6 +19,7 @@ export interface AuthenticatedRequest extends Request {
     username: string;
     role: Role;
   };
+  file?: Express.Multer.File;
 }
 
 export interface InsightsQueryInput {
@@ -29,3 +30,28 @@ export interface InsightsQueryInput {
   productId?: string;
 }
 
+// Global Express type augmentation
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: number;
+        email: string;
+        username: string;
+        role: Role;
+      };
+      file?: Multer.File;
+    }
+    
+    namespace Multer {
+      interface File {
+        buffer: Buffer;
+        originalname: string;
+        mimetype: string;
+        size: number;
+        fieldname: string;
+        encoding: string;
+      }
+    }
+  }
+}

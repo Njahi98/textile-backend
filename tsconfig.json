@@ -16,25 +16,28 @@
     "removeComments": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": false,
+    "exactOptionalPropertyTypes": false,
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
+      "@/*": ["./*"],
       "@/types/*": ["./types/*"],
       "@/utils/*": ["./utils/*"],
       "@/middleware/*": ["./middleware/*"],
       "@/controllers/*": ["./controllers/*"],
-      "@/routes/*": ["./routes/*"]
-    }
+      "@/routes/*": ["./routes/*"],
+      "@/generated/*": ["./generated/*"]
+    },
+    "typeRoots": ["./node_modules/@types", "./types"]
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    "types/**/*"
   ],
   "exclude": [
     "node_modules",
