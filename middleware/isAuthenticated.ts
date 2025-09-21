@@ -2,7 +2,7 @@ import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest, JwtPayload } from '../types';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../server';
-import { Role } from 'generated/prisma';
+import { Role } from '../generated/prisma';
 import { validateUserSession, revokeUserSession } from '../utils/sessionManager';
 
 const JWT_SECRET = process.env.JWT_SECRET!;

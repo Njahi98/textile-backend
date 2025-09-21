@@ -1,7 +1,7 @@
 import { Response, NextFunction } from "express";
 import { prisma } from '../server';
 import bcrypt from "bcrypt"
-import { Status } from 'generated/prisma';
+import { Status } from '../generated/prisma';
 import { AuthenticatedRequest } from "../types";
 import { uploadImageToCloudinary, deleteImageFromCloudinary } from "../utils/imageUpload";
 
