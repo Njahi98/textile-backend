@@ -1,5 +1,4 @@
 import express from 'express';
-import { Request, Response } from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
@@ -97,7 +96,7 @@ if(process.env.NODE_ENV !== 'production'){
   app.use(morgan('dev'));
 }
 
-app.get('/api/health', (req:Request, res:Response) => {
+app.get('/api/health', (req:express.Request, res:express.Response) => {
   res.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
