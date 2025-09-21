@@ -3,8 +3,8 @@ import { prisma } from '../server';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { RegisterRequest, LoginRequest, emailResetRequest, PasswordResetRequest } from '../utils/validation';
-import { CustomError } from '@/middleware/errorHandler';
-import { sendEmail } from '@/utils/email';
+import { CustomError } from '../middleware/errorHandler';
+import { sendEmail } from '../utils/email';
 import { AuthenticatedRequest, passwordResetJwtPayload } from '../types';
 import crypto from 'crypto';
 import { 

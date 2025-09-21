@@ -1,10 +1,10 @@
-import { createWorker, deleteWorker, getAllWorkers, getWorkerById, importWorkers, updateWorker } from '@/controllers/worker.controller';
-import { isAuthenticated } from '@/middleware/isAuthenticated';
-import { validate } from '@/middleware/validation';
-import { workerCreateSchema, workerUpdateSchema } from '@/utils/validation';
+import { createWorker, deleteWorker, getAllWorkers, getWorkerById, importWorkers, updateWorker } from '../controllers/worker.controller';
+import { isAuthenticated } from '../middleware/isAuthenticated';
+import { validate } from '../middleware/validation';
+import { workerCreateSchema, workerUpdateSchema } from '../utils/validation';
 import express from 'express';
 import multer from 'multer';
-import { skipAudit } from '@/middleware/auditMiddleware';
+import { skipAudit } from '../middleware/auditMiddleware';
 
 
 

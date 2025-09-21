@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { CustomError } from '@/middleware/errorHandler';
+import { CustomError } from '../middleware/errorHandler';
 
 interface EmailOptions {
   to: string;

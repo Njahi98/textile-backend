@@ -1,18 +1,18 @@
 import express from 'express';
-import { isAuthenticated, requireAdminOrSuperAdmin, requireSuperAdmin } from '@/middleware/isAuthenticated';
-import { validateQuery } from '@/middleware/validation';
+import { isAuthenticated, requireAdminOrSuperAdmin, requireSuperAdmin } from '../middleware/isAuthenticated';
+import { validateQuery } from '../middleware/validation';
 import {
   getAuditLogs,
   getAuditLogById,
   getAuditStats,
   exportAuditLogs,
   cleanupAuditLogs,
-} from '@/controllers/auditLog.controller';
+} from '../controllers/auditLog.controller';
 import {
   auditLogQuerySchema,
   auditStatsQuerySchema,
   auditCleanupQuerySchema,
-} from '@/utils/validation';
+} from '../utils/validation';
 
 const router = express.Router();
 

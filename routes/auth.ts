@@ -2,7 +2,7 @@ import express from 'express';
 import { getCurrentUser, login, logout, register, requestPasswordReset, resetPassword,refreshToken,googleLogin } from '../controllers/auth.controller';
 import { validate } from '../middleware/validation';
 import { registerSchema, loginSchema, emailResetSchema, passwordResetSchema,googleLoginSchema } from '../utils/validation';
-import { isAuthenticated } from '@/middleware/isAuthenticated';
+import { isAuthenticated } from '../middleware/isAuthenticated';
 
 const router = express.Router();
 

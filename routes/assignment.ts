@@ -7,13 +7,13 @@ import {
   deleteAssignment,
   getAssignmentsCalendar,
   getAssignmentConflicts,
-} from '@/controllers/assignment.controller';
-import { isAuthenticated, requireAdmin } from '@/middleware/isAuthenticated';
-import { validate } from '@/middleware/validation';
+} from '../controllers/assignment.controller';
+import { isAuthenticated } from '../middleware/isAuthenticated';
+import { validate } from '../middleware/validation';
 import {
   createAssignmentSchema,
   updateAssignmentSchema,
-} from '@/utils/validation';
+} from '../utils/validation';
 
 const router = express.Router();
 

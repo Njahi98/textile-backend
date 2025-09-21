@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../server';
 import bcrypt from 'bcrypt';
 import { Role, Status } from 'generated/prisma';
-import { deleteImageFromCloudinary } from '@/utils/imageUpload';
+import { deleteImageFromCloudinary } from '../utils/imageUpload';
 
 interface CreateUserData {
   email: string;

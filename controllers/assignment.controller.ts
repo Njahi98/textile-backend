@@ -5,7 +5,7 @@ import {
   UpdateAssignmentInput, 
   AssignmentQueryInput,
   CalendarQueryInput 
-} from "@/utils/validation";
+} from "../utils/validation";
 
 interface IdParams {
   id: string;

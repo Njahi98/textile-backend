@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../server';
 import { AuthenticatedRequest } from '../types';
 import { uploadFileToCloudinary } from '../utils/imageUpload';
-import { CreateConversationRequest } from '@/utils/validation';
+import { CreateConversationRequest } from '../utils/validation';
 
 
 // Extend AuthenticatedRequest to include validated query

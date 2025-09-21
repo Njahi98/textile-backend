@@ -1,5 +1,5 @@
 import express from 'express';
-import { isAuthenticated, requireAdmin, requireAdminOrSuperAdmin, requireSuperAdmin } from '@/middleware/isAuthenticated';
+import { isAuthenticated, requireAdmin, requireAdminOrSuperAdmin, requireSuperAdmin } from '../middleware/isAuthenticated';
 import {
   getAllUsers,
   getUserById,

@@ -1,17 +1,17 @@
 import express from 'express';
-import { isAuthenticated } from '@/middleware/isAuthenticated';
-import { validate } from '@/middleware/validation';
-import { updateUserSchema } from '@/utils/validation';
+import { isAuthenticated } from '../middleware/isAuthenticated';
+import { validate } from '../middleware/validation';
+import { updateUserSchema } from '../utils/validation';
 import {
   deleteAccount,
   updateAccount,
   updateAvatar,
   deleteAvatar,
   accountSettings,
-} from '@/controllers/account.controller';
-import { logout } from '@/controllers/auth.controller';
-import { uploadSingle } from '@/middleware/multer';
-import { imageUploadLimiter } from '@/middleware/rateLimiter';
+} from '../controllers/account.controller';
+import { logout } from '../controllers/auth.controller';
+import { uploadSingle } from '../middleware/multer';
+import { imageUploadLimiter } from '../middleware/rateLimiter';
 
 const router = express.Router();
 router.use(isAuthenticated);
