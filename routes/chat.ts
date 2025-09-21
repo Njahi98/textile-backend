@@ -53,4 +53,8 @@ router.post('/chat/test-notification',
   chatController.testNotification
 );
 
+router.delete('/chat/notifications', 
+  chatController.clearAllNotifications
+);
+
 export default router;

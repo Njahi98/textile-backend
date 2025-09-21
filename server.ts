@@ -65,6 +65,10 @@ if (process.env.NODE_ENV === 'production') {
     },
   }));
 
+  app.use(morgan('combined', {
+    skip: (req) => req.url === '/api/health'
+  }));
+
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
@@ -79,6 +83,8 @@ if (process.env.NODE_ENV === 'production') {
   }));
 
   app.use(apiLimiter);
+}else{
+  app.use(morgan('dev'));
 }
 
 app.use(
@@ -91,11 +97,6 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 app.disable('x-powered-by')
-
-
-if(process.env.NODE_ENV !== 'production'){
-  app.use(morgan('dev'));
-}
 
 app.get('/api/health', (req:express.Request, res:express.Response) => {
   res.json({

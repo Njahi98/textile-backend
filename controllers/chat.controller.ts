@@ -623,3 +623,26 @@ export const uploadFile = async (
     next(error);
   }
 };
+
+export const clearAllNotifications = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = (req as AuthenticatedRequest).user!.id;
+
+    await prisma.notification.deleteMany({
+      where: {
+        userId,
+      },
+    });
+
+    res.json({
+      success: true,
+      message: 'All notifications cleared',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
