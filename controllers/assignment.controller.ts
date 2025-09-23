@@ -466,12 +466,14 @@ export const deleteAssignment = async (
 
 // Get calendar view of assignments
 export const getAssignmentsCalendar = async (
-  req: Request<{}, {}, {}, CalendarQueryInput>,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { year, month, workerId, productionLineId } = req.query;
+     const { year, month, workerId, productionLineId } =
+      (req as Request & { validatedQuery: CalendarQueryInput }).validatedQuery;
+
 
     // Calculate date range for the month
     const startDate = new Date(year, month - 1, 1);
@@ -489,7 +491,7 @@ export const getAssignmentsCalendar = async (
     if (productionLineId) where.productionLineId = productionLineId;
 
     const assignments = await prisma.assignment.findMany({
-      where,
+      where:{worker: { isDeleted: false }, productionLine: { isDeleted: false }, ...where},
       select: {
         id: true,
         date: true,
@@ -537,103 +539,6 @@ export const getAssignmentsCalendar = async (
         month,
         totalAssignments: assignments.length,
         daysWithAssignments: Object.keys(calendar).length,
-      }
-    });
-    return;
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Get assignment conflicts
-export const getAssignmentConflicts = async (
-  req: Request<{}, {}, {}, { startDate?: string; endDate?: string }>,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { startDate, endDate } = req.query;
-
-    // Parse dates or default to current month if no date range provided
-    let start: Date;
-    let end: Date;
-
-    if (startDate) {
-      start = new Date(startDate);
-      if (isNaN(start.getTime())) {
-        res.status(400).json({
-          error: 'INVALID_START_DATE',
-          message: 'Invalid start date format',
-        });
-        return;
-      }
-    } else {
-      start = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-    }
-
-    if (endDate) {
-      end = new Date(endDate);
-      if (isNaN(end.getTime())) {
-        res.status(400).json({
-          error: 'INVALID_END_DATE',
-          message: 'Invalid end date format',
-        });
-        return;
-      }
-    } else {
-      end = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
-    }
-
-    // Find assignments where workers are assigned to multiple production lines on the same date/shift
-    const conflicts = await prisma.$queryRaw`
-      SELECT 
-        a1."workerId",
-        a1."date",
-        a1."shift",
-        json_agg(
-          json_build_object(
-            'assignmentId', a1."id",
-            'productionLineId', a1."productionLineId",
-            'position', a1."position",
-            'productionLineName', pl."name"
-          )
-        ) as assignments
-      FROM "Assignment" a1
-      JOIN "ProductionLine" pl ON a1."productionLineId" = pl."id"
-      WHERE a1."date" >= ${start}::timestamp
-        AND a1."date" <= ${end}::timestamp
-        AND EXISTS (
-          SELECT 1 FROM "Assignment" a2 
-          WHERE a2."workerId" = a1."workerId" 
-            AND a2."date" = a1."date"
-            AND a2."shift" = a1."shift"
-            AND a2."id" != a1."id"
-        )
-      GROUP BY a1."workerId", a1."date", a1."shift"
-      ORDER BY a1."date", a1."shift"
-    `;
-
-    // Get worker details for conflicts
-    const conflictsWithWorkers = await Promise.all(
-      (conflicts as any[]).map(async (conflict) => {
-        const worker = await prisma.worker.findUnique({
-          where: { id: conflict.workerId },
-          select: { id: true, name: true, cin: true, role: true }
-        });
-
-        return {
-          ...conflict,
-          worker
-        };
-      })
-    );
-
-    res.json({
-      success: true,
-      conflicts: conflictsWithWorkers,
-      summary: {
-        totalConflicts: conflictsWithWorkers.length,
-        dateRange: { startDate: start, endDate: end }
       }
     });
     return;

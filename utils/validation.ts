@@ -36,7 +36,6 @@ export const createUserSchema = z.object({
   status: statusSchema,
 });
 
-// User update (admin, all fields optional)
 export const updateUserSchema = z.object({
   email: z.string().email('Invalid email format').trim().toLowerCase().optional(),
   password: passwordSchema.optional(),
@@ -142,11 +141,12 @@ export const assignmentQuerySchema = z.object({
 
 // Calendar view query schema
 export const calendarQuerySchema = z.object({
-  year: z.coerce.number().int().min(2020).max(2030),
-  month: z.coerce.number().int().min(1).max(12),
+  year: z.coerce.number().int().min(2020).max(2030).default(new Date().getFullYear()),
+  month: z.coerce.number().int().min(1).max(12).default(new Date().getMonth() + 1),
   workerId: z.coerce.number().int().positive().optional(),
   productionLineId: z.coerce.number().int().positive().optional(),
 });
+
 
 export type CreateAssignmentInput = z.infer<typeof createAssignmentSchema>;
 export type UpdateAssignmentInput = z.infer<typeof updateAssignmentSchema>;

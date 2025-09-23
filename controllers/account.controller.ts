@@ -26,8 +26,6 @@ export const accountSettings = async (
         role: true,
         avatarUrl: true,
         avatarPublicId: true,
-        createdAt: true,
-        updatedAt: true,
       },
     });
 
@@ -56,7 +54,7 @@ export const updateAccount = async (
   try {
     const userId = req.user!.id;
 
-    const { email, username, firstName, lastName, phone, password, status } = req.body;
+    const { email, username, firstName, lastName, phone, password } = req.body;
 
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
@@ -134,10 +132,6 @@ export const updateAccount = async (
         phone: true,
         status: true,
         role: true,
-        avatarUrl: true,
-        avatarPublicId: true,
-        createdAt: true,
-        updatedAt: true,
       },
     });
 
@@ -159,7 +153,6 @@ export const updateAvatar = async (
   try {
     const userId = req.user!.id;
 
-    // Get existing user to handle avatar replacement
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
       select: { avatarPublicId: true }

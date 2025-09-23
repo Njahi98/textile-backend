@@ -24,11 +24,11 @@ export const getDashboardStats = async (
       activeProductionLines,
       totalProducts,
       activeProducts,
-      totalUsers
     ] = await Promise.all([
-      prisma.worker.count(),
+      prisma.worker.count({where:{isDeleted:false}}),
       prisma.worker.count({
         where: {
+          isDeleted:false,
           assignments: {
             some: {
               date: {
@@ -39,11 +39,10 @@ export const getDashboardStats = async (
           }
         }
       }),
-      prisma.productionLine.count(),
+      prisma.productionLine.count({where:{isDeleted:false}}),
       prisma.productionLine.count({ where: { isActive: true } }),
-      prisma.product.count(),
+      prisma.product.count({where:{isDeleted:false}}),
       prisma.product.count({ where: { isActive: true } }),
-      prisma.user.count({ where: { status: 'active' } })
     ]);
 
     // Get today's production
@@ -65,6 +64,9 @@ export const getDashboardStats = async (
       _avg: { errorRate: true },
       _count: true,
       where: {
+        worker:{isDeleted:false},
+        productionLine:{isDeleted:false},
+        product:{isDeleted:false},
         date: {
           gte: thisMonthStart,
           lt: nextMonthStart
@@ -75,6 +77,8 @@ export const getDashboardStats = async (
     // Get today's assignments count
     const todayAssignments = await prisma.assignment.count({
       where: {
+        worker:{isDeleted:false},
+        productionLine:{isDeleted:false},
         date: {
           gte: today,
           lt: tomorrow
@@ -96,9 +100,6 @@ export const getDashboardStats = async (
         products: {
           total: totalProducts,
           active: activeProducts
-        },
-        users: {
-          total: totalUsers
         },
         production: {
           today: {
@@ -140,6 +141,9 @@ export const getProductionMetrics = async (
       _avg: { errorRate: true, timeTaken: true },
       _count: true,
       where: {
+        product:{isDeleted:false},
+        worker:{isDeleted:false},
+        productionLine:{isDeleted:false},
         date: {
           gte: today,
           lt: tomorrow
@@ -206,6 +210,7 @@ export const getWorkerPerformance = async (
       _avg: { errorRate: true },
       _count: true,
       where: {
+        worker:{isDeleted:false},
         date: {
           gte: today,
           lt: tomorrow
@@ -258,6 +263,10 @@ export const getRecentActivities = async (
   try {
     // Get recent assignments
     const recentAssignments = await prisma.assignment.findMany({
+      where:{
+        productionLine:{isDeleted:false},
+        worker:{isDeleted:false},
+      },
       include: {
         worker: {
           select: { id: true, name: true, cin: true }
@@ -272,6 +281,11 @@ export const getRecentActivities = async (
 
     // Get recent performance records
     const recentPerformance = await prisma.performanceRecord.findMany({
+      where:{
+        product:{isDeleted:false},
+        worker:{isDeleted:false},
+        productionLine:{isDeleted:false},
+      },
       include: {
         worker: {
           select: { id: true, name: true, cin: true }
@@ -289,6 +303,7 @@ export const getRecentActivities = async (
 
     // Get recent worker additions
     const recentWorkers = await prisma.worker.findMany({
+      where:{isDeleted:false},
       select: {
         id: true,
         name: true,
@@ -333,6 +348,9 @@ export const getProductionTrends = async (
       _avg: { errorRate: true },
       _count: true,
       where: {
+        worker:{isDeleted:false},
+        productionLine:{isDeleted:false},
+        product:{isDeleted:false},
         date: {
           gte: sevenDaysAgo,
           lte: today

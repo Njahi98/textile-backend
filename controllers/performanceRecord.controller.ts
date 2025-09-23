@@ -40,24 +40,6 @@ interface UpdatePerformanceRecordInput {
   errorRate?: number;
 }
 
-interface DateGroup {
-  date: string;
-  records: Array<{
-    date: Date;
-    piecesMade: number;
-    errorRate: number;
-    timeTaken: number;
-  }>;
-  totalPieces: number;
-  totalErrorRate: number;
-  totalTimeTaken: number;
-  count: number;
-}
-
-interface DateGroups {
-  [key: string]: DateGroup;
-}
-
 export const getAllPerformanceRecords = async (
   req: Request<{}, {}, {}, PerformanceRecordQueryInput>,
   res: Response,

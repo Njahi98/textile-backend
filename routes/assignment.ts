@@ -6,11 +6,11 @@ import {
   updateAssignment,
   deleteAssignment,
   getAssignmentsCalendar,
-  getAssignmentConflicts,
 } from '../controllers/assignment.controller';
 import { isAuthenticated } from '../middleware/isAuthenticated';
-import { validate } from '../middleware/validation';
+import { validate, validateQuery } from '../middleware/validation';
 import {
+  calendarQuerySchema,
   createAssignmentSchema,
   updateAssignmentSchema,
 } from '../utils/validation';
@@ -19,9 +19,7 @@ const router = express.Router();
 
 router.use(isAuthenticated);
 
-router.get('/assignments/calendar', getAssignmentsCalendar);
-
-router.get('/assignments/conflicts', getAssignmentConflicts);
+router.get('/assignments/calendar',validateQuery(calendarQuerySchema), getAssignmentsCalendar);
 
 router.get('/assignments/', getAllAssignments);
 
