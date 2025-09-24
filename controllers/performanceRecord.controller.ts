@@ -1,91 +1,110 @@
 import type { Request, Response, NextFunction } from 'express';
 import { prisma } from '../server';
+import { CreatePerformanceRecordInput, PerformanceRecordQueryInput, UpdatePerformanceRecordInput } from '@/utils/validation';
 
 interface IdParams {
   id: string;
 }
 
-type Shift = 'morning' | 'afternoon' | 'night';
-
-interface PerformanceRecordQueryInput {
-  page?: number;
-  limit?: number;
-  startDate?: string;
-  endDate?: string;
-  workerId?: number;
-  productId?: number;
-  productionLineId?: number;
-  shift?: Shift;
-}
-
-interface CreatePerformanceRecordInput {
-  workerId: number;
-  productId: number;
-  productionLineId: number;
-  date: Date;
-  piecesMade: number;
-  shift: Shift;
-  timeTaken: number;
-  errorRate: number;
-}
-
-interface UpdatePerformanceRecordInput {
-  workerId?: number;
-  productId?: number;
-  productionLineId?: number;
-  date?: Date;
-  piecesMade?: number;
-  shift?: Shift;
-  timeTaken?: number;
-  errorRate?: number;
-}
 
 export const getAllPerformanceRecords = async (
-  req: Request<{}, {}, {}, PerformanceRecordQueryInput>,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const {
       page = 1,
-      limit = 100,
-      ...filters
-    } = req.query;
-    const pageNum = Number(page) || 1;
-    const limitNum = Number(limit) || 20;
-    const skip = (pageNum - 1) * limitNum;
-
-    const {
+      limit = 50,
       startDate,
       endDate,
       workerId,
       productId,
       productionLineId,
       shift,
-    } = filters;
+      search,
+    } 
+    = (req as Request & { validatedQuery: PerformanceRecordQueryInput}).validatedQuery;
+
+    const pageNum = Number(page) || 1;
+    const limitNum = Math.min(Number(limit) || 50, 100);
+    const skip = (pageNum - 1) * limitNum;
 
     // Build where clause
-    const where: any = {};
+    const where: any = {
+      worker: { isDeleted: false },
+      product: { isDeleted: false },
+      productionLine: { isDeleted: false },
+    };
 
+    // Date range filtering
     if (startDate || endDate) {
       where.date = {};
-      if (startDate) where.date.gte = startDate;
-      if (endDate) where.date.lte = endDate;
+      if (startDate) {
+        where.date.gte = startDate;
+      }
+      if (endDate) {
+        const endOfDay = new Date(endDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        where.date.lte = endOfDay;
+      }
     }
 
-    if (workerId) where.workerId = workerId;
-    if (productId) where.productId = productId;
-    if (productionLineId) where.productionLineId = productionLineId;
+    // Filter by specific IDs
+    if (workerId) where.workerId = Number(workerId);
+    if (productId) where.productId = Number(productId);
+    if (productionLineId) where.productionLineId = Number(productionLineId);
     if (shift) where.shift = shift;
+
+    // Search functionality
+    if (search && typeof search === 'string' && search.length >= 2) {
+      where.OR = [
+        {
+          worker: {
+            name: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          },
+        },
+        {
+          worker: {
+            cin: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          },
+        },
+        {
+          product: {
+            name: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          },
+        },
+        {
+          product: {
+            code: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          },
+        },
+        {
+          productionLine: {
+            name: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          },
+        },
+      ];
+    }
 
     const [performanceRecords, totalCount] = await Promise.all([
       prisma.performanceRecord.findMany({
-        where: {
-          ...where,
-          worker: { isDeleted: false },
-          product: { isDeleted: false },
-          productionLine: { isDeleted: false },
-        },
+        where,
         include: {
           worker: {
             select: {
@@ -115,14 +134,7 @@ export const getAllPerformanceRecords = async (
         skip,
         take: limitNum,
       }),
-      prisma.performanceRecord.count({ 
-        where: {
-          ...where,
-          worker: { isDeleted: false },
-          product: { isDeleted: false },
-          productionLine: { isDeleted: false },
-        }
-      })
+      prisma.performanceRecord.count({ where })
     ]);
 
     res.status(200).json({
@@ -134,7 +146,16 @@ export const getAllPerformanceRecords = async (
         totalCount,
         hasNext: skip + performanceRecords.length < totalCount,
         hasPrev: pageNum > 1,
-      }
+      },
+      filters: {
+        startDate,
+        endDate,
+        workerId,
+        productId,
+        productionLineId,
+        shift,
+        search,
+      },
     });
     return;
   } catch (error) {

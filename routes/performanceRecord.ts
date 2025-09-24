@@ -1,10 +1,11 @@
 import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
-import { isAuthenticated, requireAdmin } from '../middleware/isAuthenticated';
-import { validate } from '../middleware/validation';
+import { isAuthenticated } from '../middleware/isAuthenticated';
+import { validate, validateQuery } from '../middleware/validation';
 import { 
   createPerformanceRecordSchema, 
-  updatePerformanceRecordSchema 
+  updatePerformanceRecordSchema,
+  performanceRecordQuerySchema 
 } from '../utils/validation';
 import {
   getAllPerformanceRecords,
@@ -26,7 +27,7 @@ const router = express.Router();
 
 router.use(isAuthenticated);
 
-router.get('/performance/', withRequestHandler(getAllPerformanceRecords));
+router.get('/performance/',validateQuery(performanceRecordQuerySchema), getAllPerformanceRecords);
 router.get('/performance/analytics', withRequestHandler(getPerformanceAnalytics));
 router.get('/performance/:id', withRequestHandler(getPerformanceRecordById));
 router.post('/performance/', validate(createPerformanceRecordSchema), withRequestHandler(createPerformanceRecord));

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../server';
 import GeminiService from '../utils/geminiService';
-import { InsightsQueryInput } from '../types';
+import { InsightsQueryInput } from '@/utils/validation';
 
 
 export const getAIInsights = async (
@@ -10,7 +10,8 @@ export const getAIInsights = async (
   next: NextFunction
 ) => {
   try {
-    const { startDate, endDate, workerId, productionLineId, productId } = req.query;
+    const { startDate, endDate, workerId, productionLineId, productId }
+     = (req as Request<{}, {}, {}, InsightsQueryInput> & { validatedQuery: InsightsQueryInput}).validatedQuery;
 
     // Parse dates or default to last 30 days
     let start: Date;
@@ -48,12 +49,15 @@ export const getAIInsights = async (
       date: {
         gte: start,
         lte: end,
-      }
+      },
+      worker: { isDeleted: false },
+      product: { isDeleted: false },
+      productionLine: { isDeleted: false },
     };
 
-    if (workerId) where.workerId = parseInt(workerId);
-    if (productionLineId) where.productionLineId = parseInt(productionLineId);
-    if (productId) where.productId = parseInt(productId);
+    if (workerId) where.workerId = workerId;
+    if (productionLineId) where.productionLineId = productionLineId;
+    if (productId) where.productId = productId;
 
     // Gather all the data needed for insights
     const [

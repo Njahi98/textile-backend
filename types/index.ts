@@ -22,14 +22,6 @@ export interface AuthenticatedRequest extends Request {
   file?: Express.Multer.File;
 }
 
-export interface InsightsQueryInput {
-  startDate?: string;
-  endDate?: string;
-  workerId?: string;
-  productionLineId?: string;
-  productId?: string;
-}
-
 // Global Express type augmentation
 declare global {
   namespace Express {

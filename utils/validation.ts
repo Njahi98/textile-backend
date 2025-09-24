@@ -209,11 +209,22 @@ export const performanceRecordQuerySchema = z.object({
   shift: shiftSchema.optional(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
+  search: z.string().min(2).optional(),
 });
 
 export type CreatePerformanceRecordInput = z.infer<typeof createPerformanceRecordSchema>;
 export type UpdatePerformanceRecordInput = z.infer<typeof updatePerformanceRecordSchema>;
 export type PerformanceRecordQueryInput = z.infer<typeof performanceRecordQuerySchema>;
+
+export const InsightsQueryInputSchema = z.object({
+  startDate: z.coerce.date().optional(),
+  endDate: z.coerce.date().optional(),
+  workerId: z.coerce.number().int().positive().optional(),
+  productId: z.coerce.number().int().positive().optional(),
+  productionLineId: z.coerce.number().int().positive().optional(),
+})
+export type InsightsQueryInput=z.infer<typeof InsightsQueryInputSchema>;
+
 
 //Chat and Notification Schemas
 export const PaginationSchema = z.object({
