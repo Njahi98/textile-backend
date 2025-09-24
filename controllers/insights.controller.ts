@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../server';
 import GeminiService from '../utils/geminiService';
-import { InsightsQueryInput } from '@/utils/validation';
+import { InsightsQueryInput } from '../utils/validation';
 
 
 export const getAIInsights = async (

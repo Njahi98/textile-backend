@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { prisma } from '../server';
-import { CreatePerformanceRecordInput, PerformanceRecordQueryInput, UpdatePerformanceRecordInput } from '@/utils/validation';
+import { CreatePerformanceRecordInput, PerformanceRecordQueryInput, UpdatePerformanceRecordInput } from '../utils/validation';
 
 interface IdParams {
   id: string;
