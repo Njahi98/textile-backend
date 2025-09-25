@@ -12,6 +12,8 @@ import SocketService from './utils/socketService';
 import { cleanupExpiredSessions } from './utils/sessionManager';
 import compression from 'compression';
 import helmet from 'helmet';
+import i18n, { i18nMiddleware, initI18n } from './utils/i18n'
+
 
 import authRoutes from './routes/auth';
 import dashboardRoutes from './routes/dashboard';
@@ -96,7 +98,9 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
-app.disable('x-powered-by')
+app.use(i18nMiddleware.handle(i18n));
+
+app.disable('x-powered-by');
 
 app.get('/api/health', (req:express.Request, res:express.Response) => {
   res.json({
@@ -133,7 +137,7 @@ app.use('/api/', [
 app.use((req, res) => {
   res.status(404).json({
     error: 'Route not found',
-    message: `The requested route ${req.originalUrl} does not exist`,
+    message: req.t('errors:server.routeNotFound', { route: req.originalUrl }) ?? `The requested route ${req.originalUrl} does not exist`,
   });
 });
 
@@ -172,9 +176,17 @@ setInterval(async () => {
   }
 }, 24 * 60 * 60 * 1000);
 
-server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`WebSocket server ready on port ${PORT}`);
-});
+// Delay server start until i18n is initialized to avoid middleware receiving an uninitialized instance
+initI18n()
+  .then(() => {
+    server.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+      console.log(`WebSocket server ready on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Failed to initialize i18n:', err);
+    process.exit(1);
+  });
 
 export { prisma, socketService };

@@ -1,0 +1,14 @@
+{
+  "server": {
+    "internalError": "Internal server error",
+    "configError": "Internal server configuration error",
+    "routeNotFound": "The requested route {{route}} does not exist",
+    "unauthorized": "Please log in to access this resource",
+    "forbidden": "This action requires {{roles}} privileges"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidEmail": "Please enter a valid email address",
+    "passwordTooShort": "Password must be at least 8 characters long"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "passwordReset": {
+    "subject": "Password Reset Request",
+    "greeting": "Hello,",
+    "intro": "We received a request to reset your password. If you didn't make this request, you can safely ignore this email.",
+    "instruction": "To reset your password, click the link below (valid for 1 hour):",
+    "buttonText": "Reset Password",
+    "fallback": "If the button doesn't work, copy and paste this link into your browser:",
+    "security": "For security reasons, this link will expire in 1 hour.",
+    "signature": "Best regards,<br>Your Application Team"
+  }
+}

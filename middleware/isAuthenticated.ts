@@ -15,7 +15,7 @@ const authorizeRole = (roles: Role | Role[]) => {
     if (!req.user) {
       res.status(401).json({
         error: 'Unauthorized',
-        message: 'Please log in to access this resource',
+        message: req.t('errors:server.unauthorized') ?? 'Please log in to access this resource',
       });
       return;
     }
@@ -23,7 +23,7 @@ const authorizeRole = (roles: Role | Role[]) => {
     if (!allowedRoles.includes(req.user.role)) {
       res.status(403).json({
         error: 'Forbidden',
-        message: `This action requires ${allowedRoles.join(' or ')} privileges`,
+        message: req.t('errors:server.forbidden', { roles: allowedRoles.join(' or ') }) ?? `This action requires ${allowedRoles.join(' or ')} privileges`,
       });
       return;
     }
@@ -119,10 +119,10 @@ export const isAuthenticated = async (
         },
       });
 
-      if (!user || user.status !== 'active') {
+    if (!user || user.status !== 'active') {
         res.status(401).json({
           error: 'UserNotFound',
-          message: 'User account no longer exists or has been deactivated',
+        message: req.t('auth:errors.userNotFound') ?? 'User account no longer exists or has been deactivated',
         });
         return;
       }
@@ -160,7 +160,7 @@ export const isAuthenticated = async (
 
   res.status(401).json({
     error: 'NoValidToken',
-    message: 'Please log in to access this resource',
+    message: req.t('errors:server.unauthorized') ?? 'Please log in to access this resource',
   });
 };
 

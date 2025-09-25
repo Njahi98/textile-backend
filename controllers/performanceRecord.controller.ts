@@ -174,7 +174,7 @@ export const getPerformanceRecordById = async (
     if (isNaN(recordId)) {
       res.status(400).json({
         error: 'INVALID_ID',
-        message: 'Invalid performance record ID provided',
+        message: req.t('performance:errors.invalidId') ?? 'Invalid performance record ID provided',
       });
       return;
     }
@@ -218,7 +218,7 @@ export const getPerformanceRecordById = async (
     if (!performanceRecord) {
       res.status(404).json({
         error: 'PERFORMANCE_RECORD_NOT_FOUND',
-        message: 'Performance record not found',
+        message: req.t('performance:errors.notFound') ?? 'Performance record not found',
       });
       return;
     }
@@ -255,7 +255,7 @@ export const createPerformanceRecord = async (
     if (!worker) {
       res.status(404).json({
         error: 'WORKER_NOT_FOUND',
-        message: 'Worker not found',
+        message: req.t('performance:errors.workerNotFound') ?? 'Worker not found',
       });
       return;
     }
@@ -268,7 +268,7 @@ export const createPerformanceRecord = async (
     if (!product) {
       res.status(404).json({
         error: 'PRODUCT_NOT_FOUND',
-        message: 'Product not found',
+        message: req.t('performance:errors.productNotFound') ?? 'Product not found',
       });
       return;
     }
@@ -276,7 +276,7 @@ export const createPerformanceRecord = async (
     if (!product.isActive) {
       res.status(400).json({
         error: 'PRODUCT_INACTIVE',
-        message: 'Cannot create performance record for inactive product',
+        message: req.t('performance:errors.productInactive') ?? 'Cannot create performance record for inactive product',
       });
       return;
     }
@@ -289,7 +289,7 @@ export const createPerformanceRecord = async (
     if (!productionLine) {
       res.status(404).json({
         error: 'PRODUCTION_LINE_NOT_FOUND',
-        message: 'Production line not found',
+        message: req.t('performance:errors.prodLineNotFound') ?? 'Production line not found',
       });
       return;
     }
@@ -297,7 +297,7 @@ export const createPerformanceRecord = async (
     if (!productionLine.isActive) {
       res.status(400).json({
         error: 'PRODUCTION_LINE_INACTIVE',
-        message: 'Cannot create performance record for inactive production line',
+        message: req.t('performance:errors.prodLineInactive') ?? 'Cannot create performance record for inactive production line',
       });
       return;
     }
@@ -343,7 +343,7 @@ export const createPerformanceRecord = async (
 
     res.status(201).json({
       success: true,
-      message: 'Performance record created successfully',
+      message: req.t('performance:messages.created') ?? 'Performance record created successfully',
       performanceRecord,
     });
     return;
@@ -373,7 +373,7 @@ export const updatePerformanceRecord = async (
     if (isNaN(recordId)) {
       res.status(400).json({
         error: 'INVALID_ID',
-        message: 'Invalid performance record ID provided',
+        message: req.t('performance:errors.invalidId') ?? 'Invalid performance record ID provided',
       });
       return;
     }
@@ -383,10 +383,10 @@ export const updatePerformanceRecord = async (
       where: { id: recordId }
     });
 
-    if (!existingRecord) {
+      if (!existingRecord) {
       res.status(404).json({
         error: 'PERFORMANCE_RECORD_NOT_FOUND',
-        message: 'Performance record not found',
+          message: req.t('performance:errors.notFound') ?? 'Performance record not found',
       });
       return;
     }
@@ -400,7 +400,7 @@ export const updatePerformanceRecord = async (
       if (!worker) {
         res.status(404).json({
           error: 'WORKER_NOT_FOUND',
-          message: 'Worker not found',
+          message: req.t('performance:errors.workerNotFound') ?? 'Worker not found',
         });
         return;
       }
@@ -415,7 +415,7 @@ export const updatePerformanceRecord = async (
       if (!product) {
         res.status(404).json({
           error: 'PRODUCT_NOT_FOUND',
-          message: 'Product not found',
+          message: req.t('performance:errors.productNotFound') ?? 'Product not found',
         });
         return;
       }
@@ -423,7 +423,7 @@ export const updatePerformanceRecord = async (
       if (!product.isActive) {
         res.status(400).json({
           error: 'PRODUCT_INACTIVE',
-          message: 'Cannot assign to inactive product',
+          message: req.t('performance:errors.assignInactiveProduct') ?? 'Cannot assign to inactive product',
         });
         return;
       }
@@ -438,7 +438,7 @@ export const updatePerformanceRecord = async (
       if (!productionLine) {
         res.status(404).json({
           error: 'PRODUCTION_LINE_NOT_FOUND',
-          message: 'Production line not found',
+          message: req.t('performance:errors.prodLineNotFound') ?? 'Production line not found',
         });
         return;
       }
@@ -446,7 +446,7 @@ export const updatePerformanceRecord = async (
       if (!productionLine.isActive) {
         res.status(400).json({
           error: 'PRODUCTION_LINE_INACTIVE',
-          message: 'Cannot assign to inactive production line',
+          message: req.t('performance:errors.assignInactiveProdLine') ?? 'Cannot assign to inactive production line',
         });
         return;
       }
@@ -495,7 +495,7 @@ export const updatePerformanceRecord = async (
 
     res.json({
       success: true,
-      message: 'Performance record updated successfully',
+      message: req.t('performance:messages.updated') ?? 'Performance record updated successfully',
       performanceRecord: updatedRecord,
     });
     return;
@@ -515,7 +515,7 @@ export const deletePerformanceRecord = async (
     if (isNaN(recordId)) {
       res.status(400).json({
         error: 'INVALID_ID',
-        message: 'Invalid performance record ID provided',
+        message: req.t('performance:errors.invalidId') ?? 'Invalid performance record ID provided',
       });
       return;
     }
@@ -527,7 +527,7 @@ export const deletePerformanceRecord = async (
     if (!existingRecord) {
       res.status(404).json({
         error: 'PERFORMANCE_RECORD_NOT_FOUND',
-        message: 'Performance record not found',
+        message: req.t('performance:errors.notFound') ?? 'Performance record not found',
       });
       return;
     }
@@ -538,7 +538,7 @@ export const deletePerformanceRecord = async (
 
     res.json({
       success: true,
-      message: 'Performance record deleted successfully',
+      message: req.t('performance:messages.deleted') ?? 'Performance record deleted successfully',
     });
     return;
   } catch (error) {
@@ -569,7 +569,7 @@ export const getPerformanceAnalytics = async (
       if (isNaN(start.getTime())) {
         res.status(400).json({
           error: 'INVALID_START_DATE',
-          message: 'Invalid start date format',
+          message: req.t('performance:errors.invalidStartDate') ?? 'Invalid start date format',
         });
         return;
       }
@@ -582,7 +582,7 @@ export const getPerformanceAnalytics = async (
       if (isNaN(end.getTime())) {
         res.status(400).json({
           error: 'INVALID_END_DATE',
-          message: 'Invalid end date format',
+          message: req.t('performance:errors.invalidEndDate') ?? 'Invalid end date format',
         });
         return;
       }

@@ -12,7 +12,6 @@ import {
   validateUserSession, 
   revokeUserSession, 
   revokeAllUserSessions,
-  cleanupExpiredSessions 
 } from '../utils/sessionManager';
 import { OAuth2Client } from 'google-auth-library';
 import AuditService from '../utils/auditService';
@@ -112,8 +111,8 @@ export const register = async (
 
     if (existingUser) {
       res.status(409).json({ 
-        error: 'User already exists',
-        message: 'An account with this email already exists'
+        error: 'UserExists',
+        message: req.t('auth:errors.userExists')
       });
       return;
     }
@@ -140,7 +139,7 @@ export const register = async (
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
+      message: req.t('auth:success.registered'),
       user,
     });
   } catch (error) {
@@ -171,8 +170,8 @@ export const login = async (
 
     if (!user) {
       res.status(401).json({ 
-        error: 'Invalid credentials',
-        message: 'Email or password is incorrect'
+        error: 'InvalidCredentials',
+        message: req.t('auth:errors.invalidCredentials')
       });
       return;
     }
@@ -181,8 +180,8 @@ export const login = async (
     
     if (!isValidPassword) {
       res.status(401).json({ 
-        error: 'Invalid credentials',
-        message: 'Email or password is incorrect'
+        error: 'InvalidCredentials',
+        message: req.t('auth:errors.invalidCredentials') ?? 'Email or password is incorrect'
       });
       return;
     }
@@ -190,7 +189,7 @@ export const login = async (
     if (user.status !== 'active') {
       res.status(403).json({
         error: 'AccountInactive',
-        message: 'Your account is currently ' + user.status + ' and cannot be accessed.'
+        message: req.t('auth:errors.accountInactive', { status: user.status }) ?? ('Your account is currently ' + user.status + ' and cannot be accessed')
       });
       return;
     }
@@ -206,7 +205,7 @@ export const login = async (
 
     res.json({
       success: true,
-      message: 'Login successful',
+      message: req.t('auth:success.loginSuccessful') ?? 'Login successful',
       user: {
         id: user.id,
         email: user.email,
@@ -231,7 +230,7 @@ export const refreshToken = async (
     if (!refreshToken) {
       res.status(401).json({
         error: 'NoRefreshToken',
-        message: 'Refresh token is required',
+        message: req.t('auth:errors.noRefreshToken') ?? 'Refresh token is required',
       });
       return;
     }
@@ -242,7 +241,7 @@ export const refreshToken = async (
       clearAuthCookies(res);
       res.status(401).json({
         error: 'InvalidRefreshToken',
-        message: 'Invalid or expired refresh token',
+        message: req.t('auth:errors.invalidRefreshToken') ?? 'Invalid or expired refresh token',
       });
       return;
     }
@@ -257,7 +256,7 @@ export const refreshToken = async (
       clearAuthCookies(res);
       res.status(401).json({
         error: 'InvalidRefreshToken',
-        message: 'Invalid or expired refresh token',
+        message: req.t('auth:errors.invalidRefreshToken') ?? 'Invalid or expired refresh token',
       });
       return;
     }
@@ -268,7 +267,7 @@ export const refreshToken = async (
       clearAuthCookies(res);
       res.status(401).json({
         error: 'InvalidTokenType',
-        message: 'Invalid token type',
+        message: req.t('auth:errors.invalidTokenType') ?? 'Invalid token type',
       });
       return;
     }
@@ -289,7 +288,7 @@ export const refreshToken = async (
       clearAuthCookies(res);
       res.status(401).json({
         error: 'UserNotFound',
-        message: 'User account no longer exists or has been deactivated',
+        message: req.t('auth:errors.userNotFound') ?? 'User account no longer exists or has been deactivated',
       });
       return;
     }
@@ -301,7 +300,7 @@ export const refreshToken = async (
 
     res.json({
       success: true,
-      message: 'Tokens refreshed successfully',
+      message: req.t('auth:success.tokensRefreshed') ?? 'Tokens refreshed successfully',
       user: {
         id: user.id,
         email: user.email,
@@ -321,7 +320,7 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
     if (!refreshToken) {
       res.status(400).json({
         error: 'No active session',
-        message: 'You are not logged in or your session has expired'
+        message: req.t('auth:errors.noActiveSession') ?? 'You are not logged in or your session has expired'
       });
       return;
     }
@@ -344,14 +343,14 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
     
     res.status(200).json({ 
       success: true,
-      message: 'Logged out successfully' 
+      message: req.t('auth:success.loggedOut') ?? 'Logged out successfully'
     });
   } catch (error) {
     // Even if revoking fails, clear cookies
     clearAuthCookies(res);
     res.status(200).json({ 
       success: true,
-      message: 'Logged out successfully' 
+      message: req.t('auth:success.loggedOut') ?? 'Logged out successfully'
     });
   }
 };
@@ -368,7 +367,7 @@ export const requestPasswordReset = async(req: Request, res: Response, next: Nex
     if (!user) {
       res.status(200).json({
         success: true,
-        message: 'If an account exists with this email, you will receive a password reset link'
+        message: req.t('auth:success.passwordResetSent') ?? 'If an account exists with this email, you will receive a password reset link'
       });
       return;
     }
@@ -383,29 +382,29 @@ export const requestPasswordReset = async(req: Request, res: Response, next: Nex
     
     await sendEmail({
       to: email,
-      subject: 'Password Reset Request',
+      subject: req.t('emails:passwordReset.subject') ?? 'Password Reset Request',
       html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Password Reset Request</h2>
-        <p>Hello,</p>
-        <p>We received a request to reset your password. If you didn't make this request, you can safely ignore this email.</p>
-        <p>To reset your password, click the link below (valid for 1 hour):</p>
+        <h2>${req.t('emails:passwordReset.subject') ?? 'Password Reset Request'}</h2>
+        <p>${req.t('emails:passwordReset.greeting') ?? 'Hello,'}</p>
+        <p>${req.t('emails:passwordReset.intro') ?? "We received a request to reset your password. If you didn't make this request, you can safely ignore this email."}</p>
+        <p>${req.t('emails:passwordReset.instruction') ?? 'To reset your password, click the link below (valid for 1 hour):'}</p>
         <p>
         <a href="${resetLink}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">
-          Reset Password
+          ${req.t('emails:passwordReset.buttonText') ?? 'Reset Password'}
         </a>
         </p>
-        <p>If the button doesn't work, copy and paste this link into your browser:</p>
+        <p>${req.t('emails:passwordReset.fallback') ?? "If the button doesn't work, copy and paste this link into your browser:"}</p>
         <p>${resetLink}</p>
-        <p>For security reasons, this link will expire in 1 hour.</p>
-        <p>Best regards,<br>Your Application Team</p>
+        <p>${req.t('emails:passwordReset.security') ?? 'For security reasons, this link will expire in 1 hour.'}</p>
+        <p>${req.t('emails:passwordReset.signature') ?? 'Best regards,<br>Your Application Team'}</p>
       </div>
       `
     });
 
     res.status(200).json({
       success: true,
-      message: 'If an account exists with this email, you will receive a password reset link'
+      message: req.t('auth:success.passwordResetSent') ?? 'If an account exists with this email, you will receive a password reset link'
     });
   } catch (error) {
     next(error);
@@ -421,7 +420,7 @@ export const resetPassword = async(req: Request, res: Response, next: NextFuncti
     if (decoded.purpose !== 'password-reset') {
       res.status(400).json({
         error: 'Invalid token',
-        message: 'Invalid reset token'
+        message: req.t('auth:errors.invalidResetToken') ?? 'Invalid reset token'
       });
       return;
     }
@@ -434,7 +433,7 @@ export const resetPassword = async(req: Request, res: Response, next: NextFuncti
     if (!user) {
       res.status(400).json({
         error: 'Invalid token',
-        message: 'Invalid reset token'
+        message: req.t('auth:errors.invalidResetToken') ?? 'Invalid reset token'
       });
       return;
     }
@@ -450,7 +449,7 @@ export const resetPassword = async(req: Request, res: Response, next: NextFuncti
 
     res.status(200).json({
       success: true,
-      message: 'Password reset successfully'
+      message: req.t('auth:success.passwordReset') ?? 'Password reset successfully'
     });
   } catch (error) {
     next(error);
@@ -487,7 +486,7 @@ export const googleLogin = async (
     if (!credential) {
       res.status(400).json({
         error: 'Missing credential',
-        message: 'Google credential is required'
+        message: req.t('auth:errors.missingCredential') ?? 'Google credential is required'
       });
       return;
     }
@@ -502,7 +501,7 @@ export const googleLogin = async (
     if (!payload) {
       res.status(400).json({
         error: 'Invalid token',
-        message: 'Invalid Google credential'
+        message: req.t('auth:errors.invalidToken') ?? 'Invalid Google credential'
       });
       return;
     }
@@ -512,7 +511,7 @@ export const googleLogin = async (
     if (!email) {
       res.status(400).json({
         error: 'Email required',
-        message: 'Email is required from Google account'
+        message: req.t('auth:errors.emailRequired') ?? 'Email is required from Google account'
       });
       return;
     }
@@ -551,7 +550,7 @@ export const googleLogin = async (
       if (user.status !== 'active') {
         res.status(403).json({
           error: 'AccountInactive',
-          message: 'Your account is currently ' + user.status + ' and cannot be accessed.'
+          message: req.t('auth:errors.accountInactive', { status: user.status }) ?? ('Your account is currently ' + user.status + ' and cannot be accessed')
         });
         return;
       }
@@ -593,7 +592,7 @@ export const googleLogin = async (
 
     res.json({
       success: true,
-      message: 'Google login successful',
+      message: req.t('auth:success.googleLoginSuccessful') ?? 'Google login successful',
       user: {
         id: user.id,
         email: user.email,

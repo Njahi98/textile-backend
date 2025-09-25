@@ -1,0 +1,20 @@
+{
+  "messages": {
+    "created": "Performance record created successfully",
+    "updated": "Performance record updated successfully",
+    "deleted": "Performance record deleted successfully"
+  },
+  "errors": {
+    "invalidId": "Invalid performance record ID provided",
+    "notFound": "Performance record not found",
+    "workerNotFound": "Worker not found",
+    "productNotFound": "Product not found",
+    "productInactive": "Cannot create performance record for inactive product",
+    "prodLineNotFound": "Production line not found",
+    "prodLineInactive": "Cannot create performance record for inactive production line",
+    "invalidStartDate": "Invalid start date format",
+    "invalidEndDate": "Invalid end date format",
+    "assignInactiveProduct": "Cannot assign to inactive product",
+    "assignInactiveProdLine": "Cannot assign to inactive production line"
+  }
+}

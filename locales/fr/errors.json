@@ -1,0 +1,15 @@
+{
+  "server": {
+    "internalError": "Erreur interne du serveur",
+    "configError": "Erreur de configuration interne du serveur",
+    "routeNotFound": "La route demandée {{route}} n'existe pas",
+    "unauthorized": "Veuillez vous connecter pour accéder à cette ressource",
+    "forbidden": "Cette action nécessite des privilèges {{roles}}"
+  },
+  "validation": {
+    "required": "Ce champ est obligatoire",
+    "invalidEmail": "Veuillez entrer une adresse email valide",
+    "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères"
+  }
+}
+

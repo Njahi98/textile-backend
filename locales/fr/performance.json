@@ -1,0 +1,20 @@
+{
+  "messages": {
+    "created": "Enregistrement de performance créé avec succès",
+    "updated": "Enregistrement de performance mis à jour avec succès",
+    "deleted": "Enregistrement de performance supprimé avec succès"
+  },
+  "errors": {
+    "invalidId": "Identifiant d'enregistrement de performance invalide",
+    "notFound": "Enregistrement de performance introuvable",
+    "workerNotFound": "Ouvrier introuvable",
+    "productNotFound": "Produit introuvable",
+    "productInactive": "Impossible de créer un enregistrement pour un produit inactif",
+    "prodLineNotFound": "Ligne de production introuvable",
+    "prodLineInactive": "Impossible de créer un enregistrement pour une ligne inactive",
+    "invalidStartDate": "Format de date de début invalide",
+    "invalidEndDate": "Format de date de fin invalide",
+    "assignInactiveProduct": "Impossible d'assigner un produit inactif",
+    "assignInactiveProdLine": "Impossible d'assigner une ligne de production inactive"
+  }
+}

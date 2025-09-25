@@ -1,0 +1,12 @@
+{
+  "notifications": {
+    "newMessageTitle": "Nouveau message de {{username}}",
+    "messagePreviewSuffix": "..."
+  },
+  "errors": {
+    "authRequired": "Authentification requise",
+    "notAuthorizedConversation": "Non autorisé à envoyer un message dans cette conversation",
+    "sendFailed": "Échec de l'envoi du message"
+  }
+}
+
