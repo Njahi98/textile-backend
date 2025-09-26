@@ -137,7 +137,7 @@ export const getAuditLogById = async (
     if (isNaN(auditLogId)) {
       res.status(400).json({
         error: 'INVALID_ID',
-        message: 'Invalid audit log ID provided',
+        message: req.t('audit:errors.invalidId') ?? 'Invalid audit log ID provided',
       });
       return;
     }
@@ -161,7 +161,7 @@ export const getAuditLogById = async (
     if (!auditLog) {
       res.status(404).json({
         error: 'AUDIT_LOG_NOT_FOUND',
-        message: 'Audit log not found',
+        message: req.t('audit:errors.notFound') ?? 'Audit log not found',
       });
       return;
     }
@@ -461,7 +461,7 @@ export const cleanupAuditLogs = async (
     if (daysToKeep < 30) {
       res.status(400).json({
         error: 'INVALID_DAYS',
-        message: 'Cannot cleanup audit logs newer than 30 days',
+        message: req.t('audit:errors.invalidDays') ?? 'Cannot cleanup audit logs newer than 30 days',
       });
       return;
     }
@@ -476,10 +476,13 @@ export const cleanupAuditLogs = async (
       description: `Cleaned up ${deletedCount} audit log records older than ${daysToKeep} days`,
       metadata: { daysToKeep, deletedCount },
     }, req);
-
+    
     res.json({
       success: true,
-      message: `Successfully cleaned up ${deletedCount} audit log records`,
+      message: req.t('audit:messages.cleanupSuccess', { 
+        deletedCount, 
+        daysToKeep 
+      }) ?? `Successfully cleaned up ${deletedCount} audit log records`,
       deletedCount,
       daysToKeep,
     });

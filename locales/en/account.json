@@ -1,0 +1,17 @@
+{
+  "errors": {
+    "userNotFound": "User not found",
+    "emailExists": "This email is already in use",
+    "usernameExists": "This username is already in use",
+    "phoneExists": "This phone number is already in use",
+    "noFileProvided": "No avatar file provided",
+    "avatarUploadFailed": "Failed to upload avatar",
+    "noAvatar": "User has no avatar to delete"
+  },
+  "success": {
+    "userUpdated": "User updated successfully",
+    "avatarUpdated": "Avatar updated successfully",
+    "avatarDeleted": "Avatar deleted successfully",
+    "accountDeleted": "User deleted successfully"
+  }
+}

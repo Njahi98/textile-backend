@@ -1,0 +1,20 @@
+{
+  "messages": {
+    "created": "Product created",
+    "updated": "Product updated",
+    "deleted": "Product deleted successfully",
+    "imageDeleted": "Product image deleted",
+    "statusToggled": "Product is now {{status}}"
+  },
+  "errors": {
+    "invalidId": "Invalid product ID",
+    "notFound": "Product not found",
+    "codeExists": "A product with this code already exists",
+    "imageUploadFailed": "Failed to upload image",
+    "noImage": "Product has no image to delete"
+  },
+  "status": {
+    "active": "active",
+    "inactive": "inactive"
+  }
+}

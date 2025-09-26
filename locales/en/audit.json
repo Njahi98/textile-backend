@@ -1,0 +1,10 @@
+{
+  "messages": {
+    "cleanupSuccess": "Successfully cleaned up {{deletedCount}} audit log records older than {{daysToKeep}} days"
+  },
+  "errors": {
+    "invalidId": "Invalid audit log ID provided",
+    "notFound": "Audit log not found",
+    "invalidDays": "Cannot cleanup audit logs newer than 30 days"
+  }
+}

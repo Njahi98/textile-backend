@@ -1,0 +1,13 @@
+{
+  "messages": {
+    "insightsGenerated": "AI insights generated successfully",
+    "analysisComplete": "Production data analysis completed"
+  },
+  "errors": {
+    "invalidStartDate": "Invalid start date format",
+    "invalidEndDate": "Invalid end date format",
+    "insufficientData": "Insufficient data to generate meaningful insights",
+    "analysisError": "Error analyzing production data",
+    "aiServiceUnavailable": "AI insights service is temporarily unavailable"
+  }
+}

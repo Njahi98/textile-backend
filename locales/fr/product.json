@@ -1,0 +1,20 @@
+{
+  "messages": {
+    "created": "Produit créé",
+    "updated": "Produit mis à jour",
+    "deleted": "Produit supprimé avec succès",
+    "imageDeleted": "Image du produit supprimée",
+    "statusToggled": "Le produit est maintenant {{status}}"
+  },
+  "errors": {
+    "invalidId": "Identifiant de produit invalide",
+    "notFound": "Produit introuvable",
+    "codeExists": "Un produit avec ce code existe déjà",
+    "imageUploadFailed": "Échec du téléchargement de l'image",
+    "noImage": "Le produit n'a pas d'image à supprimer"
+  },
+  "status": {
+    "active": "actif",
+    "inactive": "inactif"
+  }
+}

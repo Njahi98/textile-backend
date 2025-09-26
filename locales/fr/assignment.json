@@ -1,0 +1,15 @@
+{
+  "messages": {
+    "created": "Affectation créée avec succès",
+    "updated": "Affectation mise à jour avec succès",
+    "deleted": "Affectation supprimée avec succès"
+  },
+  "errors": {
+    "invalidId": "Identifiant d'affectation invalide fourni",
+    "notFound": "Affectation introuvable",
+    "workerNotFound": "Ouvrier introuvable",
+    "prodLineNotFound": "Ligne de production introuvable",
+    "prodLineInactive": "Impossible d'assigner à une ligne de production inactive",
+    "assignmentConflict": "L'ouvrier est déjà assigné à {{productionLineName}} le {{date}} pour l'équipe {{shift}}"
+  }
+}

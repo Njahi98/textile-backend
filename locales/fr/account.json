@@ -1,0 +1,17 @@
+{
+  "errors": {
+    "userNotFound": "Utilisateur introuvable",
+    "emailExists": "Cet email est déjà utilisé",
+    "usernameExists": "Ce nom d'utilisateur est déjà utilisé",
+    "phoneExists": "Ce numéro de téléphone est déjà utilisé",
+    "noFileProvided": "Aucun fichier d'avatar fourni",
+    "avatarUploadFailed": "Échec du téléchargement de l'avatar",
+    "noAvatar": "L'utilisateur n'a pas d'avatar à supprimer"
+  },
+  "success": {
+    "userUpdated": "Utilisateur mis à jour avec succès",
+    "avatarUpdated": "Avatar mis à jour avec succès",
+    "avatarDeleted": "Avatar supprimé avec succès",
+    "accountDeleted": "Utilisateur supprimé avec succès"
+  }
+}

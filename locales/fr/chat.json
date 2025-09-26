@@ -1,12 +1,20 @@
 {
-  "notifications": {
-    "newMessageTitle": "Nouveau message de {{username}}",
-    "messagePreviewSuffix": "..."
+  "messages": {
+    "conversationCreated": "Conversation créée avec succès",
+    "existingConversationFound": "Conversation existante trouvée",
+    "notificationsMarkedRead": "Notifications marquées comme lues",
+    "testNotificationTitle": "Notification de Test",
+    "testNotificationContent": "Ceci est une notification de test pour vérifier que le système de notifications fonctionne !",
+    "testNotificationCreated": "Notification de test créée",
+    "notificationsCleared": "Toutes les notifications supprimées"
   },
   "errors": {
-    "authRequired": "Authentification requise",
-    "notAuthorizedConversation": "Non autorisé à envoyer un message dans cette conversation",
-    "sendFailed": "Échec de l'envoi du message"
+    "invalidId": "Identifiant de conversation invalide fourni",
+    "notParticipant": "Vous n'êtes pas participant à cette conversation",
+    "invalidParticipants": "Un ou plusieurs participants sont introuvables ou inactifs",
+    "invalidRequest": "Veuillez fournir notificationIds ou définir markAll sur true",
+    "invalidQuery": "La requête de recherche doit contenir au moins 2 caractères",
+    "noFileProvided": "Aucun fichier fourni",
+    "fileUploadFailed": "Échec du téléchargement du fichier"
   }
 }
-

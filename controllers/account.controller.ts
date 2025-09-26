@@ -32,7 +32,7 @@ export const accountSettings = async (
     if (!user) {
       res.status(404).json({
         error: 'USER_NOT_FOUND',
-        message: 'User not found'
+        message: req.t('account:errors.userNotFound') ?? 'User not found'
       });
       return;
     }
@@ -63,7 +63,7 @@ export const updateAccount = async (
     if (!existingUser) {
       res.status(404).json({
         error: 'USER_NOT_FOUND',
-        message: 'User not found'
+        message: req.t('account:errors.userNotFound') ?? 'User not found'
       });
       return;
     }
@@ -76,7 +76,7 @@ export const updateAccount = async (
       if (emailExists) {
         res.status(409).json({
           error: 'EMAIL_EXISTS',
-          message: 'This email is already in use'
+          message: req.t('account:errors.emailExists') ?? 'This email is already in use'
         });
         return;
       }
@@ -90,7 +90,7 @@ export const updateAccount = async (
       if (usernameExists) {
         res.status(409).json({
           error: 'USERNAME_EXISTS',
-          message: 'This username is already in use'
+          message: req.t('account:errors.usernameExists') ?? 'This username is already in use'
         });
         return;
       }
@@ -104,7 +104,7 @@ export const updateAccount = async (
       if (phoneExists) {
         res.status(409).json({
           error: 'PHONE_EXISTS',
-          message: 'This phone number is already in use'
+          message: req.t('account:errors.phoneExists') ?? 'This phone number is already in use'
         });
         return;
       }
@@ -137,7 +137,7 @@ export const updateAccount = async (
 
     res.json({
       success: true,
-      message: 'User updated successfully',
+      message: req.t('account:success.userUpdated') ?? 'User updated successfully',
       user: updatedUser,
     });
   } catch (error) {
@@ -161,7 +161,7 @@ export const updateAvatar = async (
     if (!existingUser) {
       res.status(404).json({
         error: 'USER_NOT_FOUND',
-        message: 'User not found'
+        message: req.t('account:errors.userNotFound') ?? 'User not found'
       });
       return;
     }
@@ -169,7 +169,7 @@ export const updateAvatar = async (
     if (!req.file) {
       res.status(400).json({
         error: 'NO_FILE',
-        message: 'No avatar file provided'
+        message: req.t('account:errors.noFileProvided') ?? 'No avatar file provided'
       });
       return;
     }
@@ -208,13 +208,13 @@ export const updateAvatar = async (
 
       res.json({
         success: true,
-        message: 'Avatar updated successfully',
+        message: req.t('account:success.avatarUpdated') ?? 'Avatar updated successfully',
         user: updatedUser,
       });
     } catch (uploadError) {
       res.status(400).json({
         error: 'AVATAR_UPLOAD_FAILED',
-        message: 'Failed to upload avatar'
+        message: req.t('account:errors.avatarUploadFailed') ?? 'Failed to upload avatar'
       });
       return;
     }
@@ -239,7 +239,7 @@ export const deleteAvatar = async (
     if (!user) {
       res.status(404).json({
         error: 'USER_NOT_FOUND',
-        message: 'User not found'
+        message: req.t('account:errors.userNotFound') ?? 'User not found'
       });
       return;
     }
@@ -247,7 +247,7 @@ export const deleteAvatar = async (
     if (!user.avatarPublicId) {
       res.status(400).json({
         error: 'NO_AVATAR',
-        message: 'User has no avatar to delete'
+        message: req.t('account:errors.noAvatar') ?? 'User has no avatar to delete'
       });
       return;
     }
@@ -280,7 +280,7 @@ export const deleteAvatar = async (
 
     res.json({
       success: true,
-      message: 'Avatar deleted successfully',
+      message: req.t('account:success.avatarDeleted') ?? 'Avatar deleted successfully',
       user: updatedUser,
     });
   } catch (error) {
@@ -304,7 +304,7 @@ export const deleteAccount = async (
     if (!existingUser) {
       res.status(404).json({
         error: 'USER_NOT_FOUND',
-        message: 'User not found'
+        message: req.t('account:errors.userNotFound') ?? 'User not found'
       });
       return;
     }
@@ -346,7 +346,7 @@ export const deleteAccount = async (
 
     res.json({
       success: true,
-      message: 'User deleted successfully'
+      message: req.t('account:success.accountDeleted') ?? 'User deleted successfully'
     });
   } catch (error) {
     next(error);

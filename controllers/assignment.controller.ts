@@ -121,7 +121,7 @@ export const getAssignmentById = async (
     if (isNaN(assignmentId)) {
       res.status(400).json({
         error: 'INVALID_ID',
-        message: 'Invalid assignment ID provided',
+        message: req.t('assignment:errors.invalidId') ?? 'Invalid assignment ID provided',
       });
       return;
     }
@@ -155,7 +155,7 @@ export const getAssignmentById = async (
     if (!assignment) {
       res.status(404).json({
         error: 'ASSIGNMENT_NOT_FOUND',
-        message: 'Assignment not found',
+        message: req.t('assignment:errors.notFound') ?? 'Assignment not found',
       });
       return;
     }
@@ -184,7 +184,7 @@ export const createAssignment = async (
     if (!worker) {
       res.status(404).json({
         error: 'WORKER_NOT_FOUND',
-        message: 'Worker not found',
+        message: req.t('assignment:errors.workerNotFound') ?? 'Worker not found',
       });
       return;
     }
@@ -197,7 +197,7 @@ export const createAssignment = async (
     if (!productionLine) {
       res.status(404).json({
         error: 'PRODUCTION_LINE_NOT_FOUND',
-        message: 'Production line not found',
+        message: req.t('assignment:errors.prodLineNotFound') ?? 'Production line not found',
       });
       return;
     }
@@ -205,7 +205,7 @@ export const createAssignment = async (
     if (!productionLine.isActive) {
       res.status(400).json({
         error: 'PRODUCTION_LINE_INACTIVE',
-        message: 'Cannot assign to inactive production line',
+        message: req.t('assignment:errors.prodLineInactive') ?? 'Cannot assign to inactive production line',
       });
       return;
     }
@@ -228,7 +228,11 @@ export const createAssignment = async (
     if (conflictingAssignment) {
       res.status(409).json({
         error: 'ASSIGNMENT_CONFLICT',
-        message: `Worker is already assigned to ${conflictingAssignment.productionLine.name} on ${date.toDateString()} for ${shift} shift`,
+          message: req.t('assignment:errors.assignmentConflict', { 
+          productionLineName: conflictingAssignment.productionLine.name,
+          date: date.toDateString(),
+          shift: shift 
+        }) ?? `Worker is already assigned to ${conflictingAssignment.productionLine.name} on ${date.toDateString()} for ${shift} shift`,
         conflictingAssignment: {
           id: conflictingAssignment.id,
           productionLineName: conflictingAssignment.productionLine.name,
@@ -268,7 +272,7 @@ export const createAssignment = async (
 
     res.status(201).json({
       success: true,
-      message: 'Assignment created successfully',
+      message: req.t('assignment:messages.created') ?? 'Assignment created successfully',
       assignment,
     });
     return;
@@ -290,7 +294,7 @@ export const updateAssignment = async (
     if (isNaN(assignmentId)) {
       res.status(400).json({
         error: 'INVALID_ID',
-        message: 'Invalid assignment ID provided',
+        message: req.t('assignment:errors.invalidId') ?? 'Invalid assignment ID provided',
       });
       return;
     }
@@ -303,7 +307,7 @@ export const updateAssignment = async (
     if (!existingAssignment) {
       res.status(404).json({
         error: 'ASSIGNMENT_NOT_FOUND',
-        message: 'Assignment not found',
+        message: req.t('assignment:errors.notFound') ?? 'Assignment not found',
       });
       return;
     }
@@ -317,7 +321,7 @@ export const updateAssignment = async (
       if (!worker) {
         res.status(404).json({
           error: 'WORKER_NOT_FOUND',
-          message: 'Worker not found',
+          message: req.t('assignment:errors.workerNotFound') ?? 'Worker not found',
         });
         return;
       }
@@ -332,7 +336,7 @@ export const updateAssignment = async (
       if (!productionLine) {
         res.status(404).json({
           error: 'PRODUCTION_LINE_NOT_FOUND',
-          message: 'Production line not found',
+          message: req.t('assignment:errors.prodLineNotFound') ?? 'Production line not found',
         });
         return;
       }
@@ -340,7 +344,7 @@ export const updateAssignment = async (
       if (!productionLine.isActive) {
         res.status(400).json({
           error: 'PRODUCTION_LINE_INACTIVE',
-          message: 'Cannot assign to inactive production line',
+          message: req.t('assignment:errors.prodLineInactive') ?? 'Cannot assign to inactive production line',
         });
         return;
       }
@@ -370,8 +374,12 @@ export const updateAssignment = async (
       if (conflictingAssignment) {
         res.status(409).json({
           error: 'ASSIGNMENT_CONFLICT',
-          message: `Worker is already assigned to ${conflictingAssignment.productionLine.name} on ${finalDate.toDateString()} for ${finalShift} shift`,
-          conflictingAssignment: {
+message: req.t('assignment:errors.assignmentConflict', { 
+            productionLineName: conflictingAssignment.productionLine.name,
+            date: finalDate.toDateString(),
+            shift: finalShift 
+          }) ?? `Worker is already assigned to ${conflictingAssignment.productionLine.name} on ${finalDate.toDateString()} for ${finalShift} shift`,
+        conflictingAssignment: {
             id: conflictingAssignment.id,
             productionLineName: conflictingAssignment.productionLine.name,
             position: conflictingAssignment.position,
@@ -413,7 +421,7 @@ export const updateAssignment = async (
 
     res.json({
       success: true,
-      message: 'Assignment updated successfully',
+      message: req.t('assignment:messages.updated') ?? 'Assignment updated successfully',
       assignment: updatedAssignment,
     });
     return;
@@ -433,7 +441,7 @@ export const deleteAssignment = async (
     if (isNaN(assignmentId)) {
       res.status(400).json({
         error: 'INVALID_ID',
-        message: 'Invalid assignment ID provided',
+        message: req.t('assignment:errors.invalidId') ?? 'Invalid assignment ID provided',
       });
       return;
     }
@@ -445,7 +453,7 @@ export const deleteAssignment = async (
     if (!existingAssignment) {
       res.status(404).json({
         error: 'ASSIGNMENT_NOT_FOUND',
-        message: 'Assignment not found',
+        message: req.t('assignment:errors.notFound') ?? 'Assignment not found',
       });
       return;
     }
@@ -456,7 +464,7 @@ export const deleteAssignment = async (
 
     res.json({
       success: true,
-      message: 'Assignment deleted successfully',
+      message: req.t('assignment:messages.deleted') ?? 'Assignment deleted successfully',
     });
     return;
   } catch (error) {

@@ -84,7 +84,9 @@ export const getProductionLineById = async (req: Request<{ id: string }>, res: R
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
-      res.status(400).json({ error: 'INVALID_ID', message: 'Invalid production line ID' });
+      res.status(400).json({ error: 'INVALID_ID',
+        message: req.t('productionLine:errors.invalidId') ?? 'Invalid production line ID' 
+         });
       return;
     }
     const line = await prisma.productionLine.findUnique({
@@ -103,7 +105,9 @@ export const getProductionLineById = async (req: Request<{ id: string }>, res: R
       },
     });
     if (!line) {
-      res.status(404).json({ error: 'NOT_FOUND', message: 'Production line not found' });
+      res.status(404).json({ error: 'NOT_FOUND',
+        message: req.t('productionLine:errors.notFound') ?? 'Production line not found' 
+         });
       return;
     }
     // Metrics for this line (today)
@@ -173,7 +177,7 @@ export const createProductionLine = async (req: Request, res: Response, next: Ne
     if (existingLine) {
       res.status(409).json({
         error: 'NAME_EXISTS',
-        message: 'A production line with this name already exists'
+        message: req.t('productionLine:errors.nameExists') ?? 'A production line with this name already exists'
       });
       return;
     }
@@ -187,7 +191,9 @@ export const createProductionLine = async (req: Request, res: Response, next: Ne
         location: location || null,
       },
     });
-    res.status(201).json({ success: true, message: 'Production line created', productionLine });
+    res.status(201).json({ success: true,
+      message: req.t('productionLine:messages.created') ?? 'Production line created', 
+        productionLine });
   } catch (error) {
     next(error);
   }
@@ -197,7 +203,9 @@ export const updateProductionLine = async (req: Request<{ id: string }>, res: Re
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
-      res.status(400).json({ error: 'INVALID_ID', message: 'Invalid production line ID' });
+      res.status(400).json({ error: 'INVALID_ID',
+        message: req.t('productionLine:errors.invalidId') ?? 'Invalid production line ID' 
+         });
       return;
     }
 
@@ -207,7 +215,9 @@ export const updateProductionLine = async (req: Request<{ id: string }>, res: Re
     });
 
     if (!existingLine) {
-      res.status(404).json({ error: 'NOT_FOUND', message: 'Production line not found' });
+      res.status(404).json({ error: 'NOT_FOUND',
+        message: req.t('productionLine:errors.notFound') ?? 'Production line not found' 
+         });
       return;
     }
 
@@ -222,7 +232,7 @@ export const updateProductionLine = async (req: Request<{ id: string }>, res: Re
       if (nameExists) {
         res.status(409).json({
           error: 'NAME_EXISTS',
-          message: 'A production line with this name already exists'
+          message: req.t('productionLine:errors.nameExists') ?? 'A production line with this name already exists'
         });
         return;
       }
@@ -239,7 +249,9 @@ export const updateProductionLine = async (req: Request<{ id: string }>, res: Re
         isActive,
       },
     });
-    res.json({ success: true, message: 'Production line updated', productionLine });
+    res.json({ success: true,
+      message: req.t('productionLine:messages.updated') ?? 'Production line updated', 
+        productionLine });
   } catch (error) {
     next(error);
   }
@@ -249,19 +261,27 @@ export const toggleProductionLineStatus = async (req: Request<{ id: string }>, r
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
-      res.status(400).json({ error: 'INVALID_ID', message: 'Invalid production line ID' });
+      res.status(400).json({ error: 'INVALID_ID',
+        message: req.t('productionLine:errors.invalidId') ?? 'Invalid production line ID' 
+         });
       return;
     }
     const line = await prisma.productionLine.findUnique({ where: { id } });
     if (!line) {
-      res.status(404).json({ error: 'NOT_FOUND', message: 'Production line not found' });
+      res.status(404).json({ error: 'NOT_FOUND',
+        message: req.t('productionLine:errors.notFound') ?? 'Production line not found' 
+         });
       return;
     }
     const updated = await prisma.productionLine.update({
       where: { id },
       data: { isActive: !line.isActive },
     });
-    res.json({ success: true, message: `Production line is now ${updated.isActive ? 'active' : 'inactive'}`, productionLine: updated });
+    res.json({ success: true,
+      message: req.t('productionLine:messages.statusToggled', { 
+        status: updated.isActive ? req.t('productionLine:status.active') : req.t('productionLine:status.inactive') 
+      }) ?? `Production line is now ${updated.isActive ? 'active' : 'inactive'}`,
+              productionLine: updated });
   } catch (error) {
     next(error);
   }
@@ -271,7 +291,9 @@ export const deleteProductionLine = async (req: Request<{ id: string }>, res: Re
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
-      res.status(400).json({ error: 'INVALID_ID', message: 'Invalid production line ID' });
+      res.status(400).json({ error: 'INVALID_ID',
+        message: req.t('productionLine:errors.invalidId') ?? 'Invalid production line ID' 
+         });
       return;
     }
 
@@ -281,7 +303,9 @@ export const deleteProductionLine = async (req: Request<{ id: string }>, res: Re
       });
 
     if (!existingLine) {
-      res.status(404).json({ error: 'NOT_FOUND', message: 'Production line not found' });
+      res.status(404).json({ error: 'NOT_FOUND',
+        message: req.t('productionLine:errors.notFound') ?? 'Production line not found' 
+         });
       return;
     }
 
@@ -295,7 +319,9 @@ export const deleteProductionLine = async (req: Request<{ id: string }>, res: Re
       }
     });
 
-    res.json({ success: true, message: 'Production line deleted successfully' });
+    res.json({ success: true,
+      message: req.t('productionLine:messages.deleted') ?? 'Production line deleted successfully' 
+       });
   } catch (error) {
     next(error);
   }

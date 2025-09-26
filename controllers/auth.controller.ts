@@ -461,7 +461,7 @@ export const getCurrentUser = (req: AuthenticatedRequest, res: Response, next: N
     if (!req.user) {
       res.status(401).json({
         error: 'Unauthorized',
-        message: 'User not authenticated'
+        message: req.t('auth:errors.unauthorized') ?? 'User not authenticated'
       });
       return;
     }

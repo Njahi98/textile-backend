@@ -1,0 +1,10 @@
+{
+  "messages": {
+    "cleanupSuccess": "Nettoyage réussi de {{deletedCount}} enregistrements d'audit de plus de {{daysToKeep}} jours"
+  },
+  "errors": {
+    "invalidId": "Identifiant de journal d'audit invalide fourni",
+    "notFound": "Journal d'audit introuvable",
+    "invalidDays": "Impossible de nettoyer les journaux d'audit plus récents que 30 jours"
+  }
+}

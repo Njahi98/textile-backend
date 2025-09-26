@@ -141,7 +141,7 @@ export const getConversationMessages = async (
     if (isNaN(conversationId)) {
       res.status(400).json({
         error: 'INVALID_ID',
-        message: 'Invalid conversation ID provided'
+        message: req.t('chat:errors.invalidId') ?? 'Invalid conversation ID provided'
       });
       return;
     }
@@ -158,7 +158,7 @@ export const getConversationMessages = async (
     if (!participant) {
       res.status(403).json({
         error: 'ACCESS_DENIED',
-        message: 'You are not a participant in this conversation'
+        message: req.t('chat:errors.notParticipant') ?? 'You are not a participant in this conversation'
       });
       return;
     }
@@ -273,7 +273,7 @@ export const createConversation = async (
         res.json({
           success: true,
           conversation: existingConversation,
-          message: 'Existing conversation found',
+          message: req.t('chat:messages.existingConversationFound') ?? 'Existing conversation found',
         });
         return;
       }
@@ -291,7 +291,7 @@ export const createConversation = async (
     if (users.length !== allParticipantIds.length) {
       res.status(400).json({
         error: 'INVALID_PARTICIPANTS',
-        message: 'One or more participants not found or inactive'
+        message: req.t('chat:errors.invalidParticipants') ?? 'One or more participants not found or inactive'
       });
       return;
     }
@@ -327,7 +327,7 @@ export const createConversation = async (
     res.status(201).json({
       success: true,
       conversation,
-      message: 'Conversation created successfully',
+      message: req.t('chat:messages.conversationCreated') ?? 'Conversation created successfully',
     });
   } catch (error) {
     next(error);
@@ -415,14 +415,14 @@ export const markNotificationsRead = async (
     } else {
       res.status(400).json({
         error: 'INVALID_REQUEST',
-        message: 'Either provide notificationIds or set markAll to true'
+        message: req.t('chat:errors.invalidRequest') ?? 'Either provide notificationIds or set markAll to true'
       });
       return;
     }
 
     res.json({
       success: true,
-      message: 'Notifications marked as read',
+      message: req.t('chat:messages.notificationsMarkedRead') ?? 'Notifications marked as read',
     });
   } catch (error) {
     next(error);
@@ -441,7 +441,7 @@ export const searchUsers = async (
     if (!query || query.length < 2) {
       res.status(400).json({
         error: 'INVALID_QUERY',
-        message: 'Search query must be at least 2 characters long'
+        message: req.t('chat:errors.invalidQuery') ?? 'Search query must be at least 2 characters long'
       });
       return;
     }
@@ -487,14 +487,14 @@ export const testNotification = async (req: Request, res: Response, next: NextFu
       const userId = (req as AuthenticatedRequest).user!.id;
             const notification = await global.socketService.createNotification(userId, {
         type: 'SYSTEM',
-        title: 'Test Notification',
-        content: 'This is a test notification to verify the notification system is working!',
+        title: req.t('chat:messages.testNotificationTitle') ?? 'Test Notification',
+        content: req.t('chat:messages.testNotificationContent') ?? 'This is a test notification to verify the notification system is working!',
         data: { test: true }
       });
 
       res.json({
         success: true,
-        message: 'Test notification created',
+        message: req.t('chat:messages.testNotificationCreated') ?? 'Test notification created',
         notification
       });
     } catch (error) {
@@ -515,7 +515,7 @@ export const uploadFile = async (
     if (isNaN(conversationId)) {
       res.status(400).json({
         error: 'INVALID_ID',
-        message: 'Invalid conversation ID provided'
+        message: req.t('chat:errors.invalidId') ?? 'Invalid conversation ID provided'
       });
       return;
     }
@@ -523,7 +523,7 @@ export const uploadFile = async (
     if (!req.file) {
       res.status(400).json({
         error: 'NO_FILE',
-        message: 'No file provided'
+        message: req.t('chat:errors.noFileProvided') ?? 'No file provided'
       });
       return;
     }
@@ -540,7 +540,7 @@ export const uploadFile = async (
     if (!participant) {
       res.status(403).json({
         error: 'ACCESS_DENIED',
-        message: 'You are not a participant in this conversation'
+        message: req.t('chat:errors.notParticipant') ?? 'You are not a participant in this conversation'
       });
       return;
     }
@@ -615,7 +615,7 @@ export const uploadFile = async (
     } catch (uploadError) {
       res.status(400).json({
         error: 'FILE_UPLOAD_FAILED',
-        message: 'Failed to upload file'
+        message: req.t('chat:errors.fileUploadFailed') ?? 'Failed to upload file'
       });
       return;
     }
@@ -640,7 +640,7 @@ export const clearAllNotifications = async (
 
     res.json({
       success: true,
-      message: 'All notifications cleared',
+      message: req.t('chat:messages.notificationsCleared') ?? 'All notifications cleared',
     });
   } catch (error) {
     next(error);

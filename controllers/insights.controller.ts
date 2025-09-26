@@ -22,7 +22,7 @@ export const getAIInsights = async (
       if (isNaN(start.getTime())) {
         res.status(400).json({
           error: 'INVALID_START_DATE',
-          message: 'Invalid start date format',
+          message: req.t('insights:errors.invalidStartDate') ?? 'Invalid start date format',
         });
         return;
       }
@@ -36,7 +36,7 @@ export const getAIInsights = async (
       if (isNaN(end.getTime())) {
         res.status(400).json({
           error: 'INVALID_END_DATE',
-          message: 'Invalid end date format',
+          message: req.t('insights:errors.invalidEndDate') ?? 'Invalid end date format',
         });
         return;
       }

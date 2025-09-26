@@ -1,0 +1,15 @@
+{
+  "messages": {
+    "created": "Assignment created successfully",
+    "updated": "Assignment updated successfully",
+    "deleted": "Assignment deleted successfully"
+  },
+  "errors": {
+    "invalidId": "Invalid assignment ID provided",
+    "notFound": "Assignment not found",
+    "workerNotFound": "Worker not found",
+    "prodLineNotFound": "Production line not found",
+    "prodLineInactive": "Cannot assign to inactive production line",
+    "assignmentConflict": "Worker is already assigned to {{productionLineName}} on {{date}} for {{shift}} shift"
+  }
+}

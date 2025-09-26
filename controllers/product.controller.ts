@@ -18,7 +18,9 @@ export const getProductById = async (req: Request<{ id: string }>, res: Response
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
-      res.status(400).json({ error: 'INVALID_ID', message: 'Invalid product ID' });
+      res.status(400).json({ error: 'INVALID_ID',
+        message: req.t('product:errors.invalidId') ?? 'Invalid product ID' 
+         });
       return;
     }
     const product = await prisma.product.findUnique({
@@ -36,7 +38,9 @@ export const getProductById = async (req: Request<{ id: string }>, res: Response
       },
     });
     if (!product) {
-      res.status(404).json({ error: 'NOT_FOUND', message: 'Product not found' });
+      res.status(404).json({ error: 'NOT_FOUND',
+        message: req.t('product:errors.notFound') ?? 'Product not found' 
+         });
       return;
     }
     res.json({ success: true, product });
@@ -59,7 +63,7 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
       if (existingProduct) {
         res.status(409).json({
           error: 'CODE_EXISTS',
-          message: 'A product with this code already exists'
+          message: req.t('product:errors.codeExists') ?? 'A product with this code already exists'
         });
         return;
       }
@@ -74,7 +78,7 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
       } catch (uploadError) {
         res.status(400).json({ 
           error: 'IMAGE_UPLOAD_FAILED', 
-          message: 'Failed to upload image' 
+          message: req.t('product:errors.imageUploadFailed') ?? 'Failed to upload image' 
         });
         return;
       }
@@ -92,7 +96,9 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
       },
     });
 
-    res.status(201).json({ success: true, message: 'Product created', product });
+    res.status(201).json({ success: true,
+      message: req.t('product:messages.created') ?? 'Product created', 
+        product });
   } catch (error) {
     // If product creation fails but image was uploaded, clean up the image
     if (req.file && req.body.imagePublicId) {
@@ -106,7 +112,9 @@ export const updateProduct = async (req: Request<{ id: string }>, res: Response,
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
-      res.status(400).json({ error: 'INVALID_ID', message: 'Invalid product ID' });
+      res.status(400).json({ error: 'INVALID_ID',
+        message: req.t('product:errors.invalidId') ?? 'Invalid product ID' 
+         });
       return;
     }
 
@@ -117,7 +125,9 @@ export const updateProduct = async (req: Request<{ id: string }>, res: Response,
     });
 
     if (!existingProduct) {
-      res.status(404).json({ error: 'NOT_FOUND', message: 'Product not found' });
+      res.status(404).json({ error: 'NOT_FOUND',
+        message: req.t('product:errors.notFound') ?? 'Product not found' 
+         });
       return;
     }
 
@@ -133,7 +143,7 @@ export const updateProduct = async (req: Request<{ id: string }>, res: Response,
       if (codeExists) {
         res.status(409).json({
           error: 'CODE_EXISTS',
-          message: 'A product with this code already exists'
+          message: req.t('product:errors.codeExists') ?? 'A product with this code already exists'
         });
         return;
       }
@@ -153,7 +163,7 @@ export const updateProduct = async (req: Request<{ id: string }>, res: Response,
       } catch (uploadError) {
         res.status(400).json({ 
           error: 'IMAGE_UPLOAD_FAILED', 
-          message: 'Failed to upload image' 
+          message: req.t('product:errors.imageUploadFailed') ?? 'Failed to upload image' 
         });
         return;
       }
@@ -179,7 +189,9 @@ export const updateProduct = async (req: Request<{ id: string }>, res: Response,
       data: updateData,
     });
 
-    res.json({ success: true, message: 'Product updated', product });
+    res.json({ success: true,
+      message: req.t('product:messages.updated') ?? 'Product updated', 
+        product });
   } catch (error) {
     next(error);
   }
@@ -189,7 +201,9 @@ export const deleteProduct = async (req: Request<{ id: string }>, res: Response,
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
-      res.status(400).json({ error: 'INVALID_ID', message: 'Invalid product ID' });
+      res.status(400).json({ error: 'INVALID_ID',
+        message: req.t('product:errors.invalidId') ?? 'Invalid product ID' 
+         });
       return;
     }
 
@@ -199,7 +213,9 @@ export const deleteProduct = async (req: Request<{ id: string }>, res: Response,
       });
 
     if (!existingProduct) {
-      res.status(404).json({ error: 'NOT_FOUND', message: 'Product not found' });
+      res.status(404).json({ error: 'NOT_FOUND',
+        message: req.t('product:errors.notFound') ?? 'Product not found' 
+         });
       return;
     }
 
@@ -223,7 +239,9 @@ export const deleteProduct = async (req: Request<{ id: string }>, res: Response,
       }
     }
 
-    res.json({ success: true, message: 'Product deleted successfully' });
+    res.json({ success: true,
+      message: req.t('product:messages.deleted') ?? 'Product deleted successfully' 
+       });
   } catch (error) {
     next(error);
   }
@@ -233,7 +251,9 @@ export const deleteProductImage = async (req: Request<{ id: string }>, res: Resp
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
-      res.status(400).json({ error: 'INVALID_ID', message: 'Invalid product ID' });
+      res.status(400).json({ error: 'INVALID_ID',
+        message: req.t('product:errors.invalidId') ?? 'Invalid product ID' 
+         });
       return;
     }
 
@@ -243,12 +263,16 @@ export const deleteProductImage = async (req: Request<{ id: string }>, res: Resp
     });
 
     if (!product) {
-      res.status(404).json({ error: 'NOT_FOUND', message: 'Product not found' });
+      res.status(404).json({ error: 'NOT_FOUND',
+        message: req.t('product:errors.notFound') ?? 'Product not found' 
+         });
       return;
     }
 
     if (!product.imagePublicId) {
-      res.status(400).json({ error: 'NO_IMAGE', message: 'Product has no image to delete' });
+      res.status(400).json({ error: 'NO_IMAGE',
+        message: req.t('product:errors.noImage') ?? 'Product has no image to delete' 
+         });
       return;
     }
 
@@ -264,7 +288,9 @@ export const deleteProductImage = async (req: Request<{ id: string }>, res: Resp
       },
     });
 
-    res.json({ success: true, message: 'Product image deleted', product: updatedProduct });
+    res.json({ success: true,
+      message: req.t('product:messages.imageDeleted') ?? 'Product image deleted', 
+        product: updatedProduct });
   } catch (error) {
     next(error);
   }
@@ -274,13 +300,17 @@ export const toggleProductStatus = async (req: Request<{ id: string }>, res: Res
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
-      res.status(400).json({ error: 'INVALID_ID', message: 'Invalid product ID' });
+      res.status(400).json({ error: 'INVALID_ID',
+        message: req.t('product:errors.invalidId') ?? 'Invalid product ID' 
+         });
       return;
     }
 
     const product = await prisma.product.findUnique({ where: { id } });
     if (!product) {
-      res.status(404).json({ error: 'NOT_FOUND', message: 'Product not found' });
+      res.status(404).json({ error: 'NOT_FOUND',
+        message: req.t('product:errors.notFound') ?? 'Product not found' 
+         });
       return;
     }
 
@@ -291,8 +321,10 @@ export const toggleProductStatus = async (req: Request<{ id: string }>, res: Res
 
     res.json({ 
       success: true, 
-      message: `Product is now ${updatedProduct.isActive ? 'active' : 'inactive'}`, 
-      product: updatedProduct 
+        message: req.t('product:messages.statusToggled', { 
+        status: updatedProduct.isActive ? req.t('product:status.active') : req.t('product:status.inactive') 
+      }) ?? `Product is now ${updatedProduct.isActive ? 'active' : 'inactive'}`,
+             product: updatedProduct 
     });
   } catch (error) {
     next(error);

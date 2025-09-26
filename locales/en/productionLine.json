@@ -1,0 +1,17 @@
+{
+  "messages": {
+    "created": "Production line created",
+    "updated": "Production line updated",
+    "deleted": "Production line deleted successfully",
+    "statusToggled": "Production line is now {{status}}"
+  },
+  "errors": {
+    "invalidId": "Invalid production line ID",
+    "notFound": "Production line not found",
+    "nameExists": "A production line with this name already exists"
+  },
+  "status": {
+    "active": "active",
+    "inactive": "inactive"
+  }
+}

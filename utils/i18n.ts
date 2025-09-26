@@ -26,7 +26,8 @@ export async function initI18n(): Promise<void> {
       cookieMinutes: 10080,
     },
 
-    ns: ['common', 'auth', 'emails', 'errors', 'performance', 'chat'],
+    ns: ['common', 'auth', 'emails', 'errors', 'performance',
+      'chat','account','assignment','audit','insights','product','productionLine'],
     defaultNS: 'common',
 
     interpolation: {
