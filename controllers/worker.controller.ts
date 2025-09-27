@@ -73,7 +73,7 @@ export const getWorkerById = async (
     if (isNaN(workerId)) {
       res.status(400).json({
         error: 'INVALID_ID',
-        message: 'Invalid worker ID provided',
+        message: req.t('worker:errors.invalidId') ?? 'Invalid worker ID provided',
       });
       return;
     }
@@ -120,7 +120,7 @@ export const getWorkerById = async (
     if (!worker) {
       res.status(404).json({
         error: 'WORKER_NOT_FOUND',
-        message: 'Worker not found',
+        message: req.t('worker:errors.notFound') ?? 'Worker not found',
       });
       return;
     }
@@ -148,7 +148,7 @@ export const createWorker = async (
       if (cinExists) {
         res.status(409).json({
           error: 'CIN_EXISTS',
-          message: 'This CIN is already in use'
+        message: req.t('worker:errors.cinExists') ?? 'This CIN is already in use'
         });
         return;
       }
@@ -162,7 +162,7 @@ export const createWorker = async (
       if (emailExists) {
         res.status(409).json({
           error: 'EMAIL_EXISTS',
-          message: 'This email is already in use'
+        message: req.t('worker:errors.emailExists') ?? 'This email is already in use'
         });
         return;
       }
@@ -176,7 +176,7 @@ export const createWorker = async (
       if (phoneExists) {
         res.status(409).json({
           error: 'PHONE_EXISTS',
-          message: 'This phone number is already in use'
+        message: req.t('worker:errors.phoneExists') ?? 'This phone number is already in use'
         });
         return;
       }
@@ -203,7 +203,7 @@ export const createWorker = async (
     });
     res.status(201).json({
       success: true,
-      message: 'Worker created successfully',
+      message: req.t('worker:messages.createSuccess') ?? 'Worker created successfully',
       worker,
     });
     return;
@@ -222,7 +222,7 @@ export const updateWorker = async (
     if (isNaN(workerId)) {
       res.status(400).json({
         error: 'INVALID_ID',
-        message: 'Invalid worker ID provided',
+        message: req.t('worker:errors.invalidId') ?? 'Invalid worker ID provided',
       });
       return;
     }
@@ -235,7 +235,7 @@ export const updateWorker = async (
     if (!existingWorker) {
       res.status(404).json({
         error: 'WORKER_NOT_FOUND',
-        message: 'Worker not found',
+        message: req.t('worker:errors.notFound') ?? 'Worker not found',
       });
       return;
     }
@@ -248,7 +248,7 @@ export const updateWorker = async (
       if (cinExists) {
         res.status(409).json({
           error: 'CIN_EXISTS',
-          message: 'This cin is already in use'
+        message: req.t('worker:errors.cinExists') ?? 'This cin is already in use'
         });
         return;
       }
@@ -262,7 +262,7 @@ export const updateWorker = async (
       if (emailExists) {
         res.status(409).json({
           error: 'EMAIL_EXISTS',
-          message: 'This email is already in use'
+        message: req.t('worker:errors.emailExists') ?? 'This email is already in use'
         });
         return;
       }
@@ -276,7 +276,7 @@ export const updateWorker = async (
       if (phoneExists) {
         res.status(409).json({
           error: 'PHONE_EXISTS',
-          message: 'This phone number is already in use'
+        message: req.t('worker:errors.phoneExists') ?? 'This phone number is already in use'
         });
         return;
       }
@@ -306,7 +306,7 @@ export const updateWorker = async (
     });
     res.json({
       success: true,
-      message: 'worker updated successfully',
+      message: req.t('worker:messages.updateSuccess') ?? 'worker updated successfully',
       worker: updatedWorker,
     });
     return;
@@ -325,7 +325,7 @@ export const deleteWorker = async (
     if (isNaN(workerId)) {
       res.status(400).json({
         error: 'INVALID_ID',
-        message: 'Invalid worker ID provided',
+        message: req.t('worker:errors.invalidId') ?? 'Invalid worker ID provided',
       });
       return;
     }
@@ -335,7 +335,7 @@ export const deleteWorker = async (
     if (!existingWorker) {
       res.status(404).json({
         error: 'WORKER_NOT_FOUND',
-        message: 'Worker not found',
+        message: req.t('worker:errors.notFound') ?? 'Worker not found',
       });
       return;
     }
@@ -351,7 +351,7 @@ export const deleteWorker = async (
 
     res.json({
       success: true,
-      message: 'Worker deleted successfully',
+      message: req.t('worker:messages.deleteSuccess') ?? 'Worker deleted successfully',
     });
   } catch (error) {
     next(error);
@@ -367,7 +367,7 @@ export const importWorkers = async (
     if (!req.file) {
       res.status(400).json({
         error: 'NO_FILE',
-        message: 'No file uploaded',
+        message: req.t('worker:errors.noFile') ?? 'No file uploaded',
       });
       return;
     }
@@ -385,7 +385,7 @@ export const importWorkers = async (
     } catch (parseError) {
       res.status(400).json({
         error: 'INVALID_CSV',
-        message: 'Invalid CSV format',
+        message: req.t('worker:errors.invalidCsv') ?? 'Invalid CSV format',
       });
       return;
     }
@@ -393,7 +393,7 @@ export const importWorkers = async (
     if (!records || records.length === 0) {
       res.status(400).json({
         error: 'EMPTY_CSV',
-        message: 'CSV file is empty',
+        message: req.t('worker:errors.emptyCsv') ?? 'CSV file is empty',
       });
       return;
     }
@@ -404,7 +404,7 @@ export const importWorkers = async (
     if (!firstRecord) {
       res.status(400).json({
         error: 'EMPTY_CSV',
-        message: 'CSV file is empty',
+        message: req.t('worker:errors.emptyCsv') ?? 'CSV file is empty',
       });
       return;
     }
@@ -413,7 +413,7 @@ export const importWorkers = async (
     if (missingColumns.length > 0) {
       res.status(400).json({
         error: 'MISSING_COLUMNS',
-        message: `Missing required columns: ${missingColumns.join(', ')}`,
+        message: req.t('worker:errors.missingColumns', { columns: missingColumns.join(', ') }) ?? `Missing required columns: ${missingColumns.join(', ')}`,
       });
       return;
     }
@@ -436,7 +436,7 @@ export const importWorkers = async (
           results.errors.push({
             row: rowNumber,
             data: record,
-            error: 'Missing required fields (name, cin)',
+            error: req.t('worker:errors.missingFields') ?? 'Missing required fields (name, cin)',
           });
           continue;
         }
@@ -449,7 +449,7 @@ export const importWorkers = async (
           results.errors.push({
             row: rowNumber,
             data: record,
-            error: `CIN ${record.cin} already exists`,
+            error: req.t('worker:errors.cinExistsImport', { cin: record.cin }) ?? `CIN ${record.cin} already exists`,
           });
           continue;
         }
@@ -464,7 +464,7 @@ export const importWorkers = async (
             results.errors.push({
               row: rowNumber,
               data: record,
-              error: `Email ${record.email} already exists`,
+              error: req.t('worker:errors.emailExistsImport', { email: record.email }) ?? `Email ${record.email} already exists`,
             });
             continue;
           }
@@ -480,7 +480,7 @@ export const importWorkers = async (
             results.errors.push({
               row: rowNumber,
               data: record,
-              error: `Phone ${record.phone} already exists`,
+              error: req.t('worker:errors.phoneExistsImport', { phone: record.phone }) ?? `Phone ${record.phone} already exists`,
             });
             continue;
           }
@@ -545,7 +545,10 @@ export const importWorkers = async (
 
     res.json({
       success: true,
-      message: `Import completed. ${results.success.length} workers imported, ${results.errors.length} errors`,
+      message: req.t('worker:messages.importSuccess', { 
+        imported: results.success.length, 
+        errors: results.errors.length 
+      }) ?? `Import completed. ${results.success.length} workers imported, ${results.errors.length} errors`,
       results,
     });
 

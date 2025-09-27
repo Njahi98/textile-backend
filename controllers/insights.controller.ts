@@ -205,6 +205,7 @@ export const getAIInsights = async (
 
     res.json({
       success: true,
+      message:req.t('insights:messages.insightsGenerated'),
       insights,
       dataAnalyzed: {
         dateRange: { startDate: start, endDate: end },

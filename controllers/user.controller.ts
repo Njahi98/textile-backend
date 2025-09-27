@@ -73,7 +73,7 @@ export const getUserById = async (
     if (isNaN(userId)) {
       res.status(400).json({
         error: 'INVALID_ID',
-        message: 'Invalid user ID provided'
+        message: req.t('user:errors.invalidId') ?? 'Invalid user ID provided'
       });
       return;
     }
@@ -97,7 +97,7 @@ export const getUserById = async (
     if (!user) {
       res.status(404).json({
         error: 'USER_NOT_FOUND',
-        message: 'User not found'
+        message: req.t('user:errors.notFound') ?? 'User not found'
       });
       return;
     }
@@ -126,7 +126,7 @@ export const createUser = async (
     if (existingUserByEmail) {
       res.status(409).json({
         error: 'EMAIL_EXISTS',
-        message: 'An account with this email already exists'
+        message: req.t('user:errors.emailExists') ?? 'An account with this email already exists'
       });
       return;
     }
@@ -138,7 +138,7 @@ export const createUser = async (
     if (existingUserByUsername) {
       res.status(409).json({
         error: 'USERNAME_EXISTS',
-        message: 'An account with this username already exists'
+        message: req.t('user:errors.usernameExists') ?? 'An account with this username already exists'
       });
       return;
     }
@@ -151,7 +151,7 @@ export const createUser = async (
       if (existingUserByPhone) {
         res.status(409).json({
           error: 'PHONE_EXISTS',
-          message: 'An account with this phone number already exists'
+        message: req.t('user:errors.phoneExists') ?? 'An account with this phone number already exists'
         });
         return;
       }
@@ -184,7 +184,7 @@ export const createUser = async (
 
     res.status(201).json({
       success: true,
-      message: 'User created successfully',
+      message: req.t('user:messages.createSuccess') ?? 'User created successfully',
       user,
     });
   } catch (error) {
@@ -202,7 +202,7 @@ export const updateUser = async (
     if (isNaN(userId)) {
       res.status(400).json({
         error: 'INVALID_ID',
-        message: 'Invalid user ID provided'
+        message: req.t('user:errors.invalidId') ?? 'Invalid user ID provided'
       });
       return;
     }
@@ -216,7 +216,7 @@ export const updateUser = async (
     if (!existingUser) {
       res.status(404).json({
         error: 'USER_NOT_FOUND',
-        message: 'User not found'
+        message: req.t('user:errors.notFound') ?? 'User not found'
       });
       return;
     }
@@ -229,7 +229,7 @@ export const updateUser = async (
       if (emailExists) {
         res.status(409).json({
           error: 'EMAIL_EXISTS',
-          message: 'This email is already in use'
+        message: req.t('user:errors.emailExists') ?? 'This email is already in use'
         });
         return;
       }
@@ -243,7 +243,7 @@ export const updateUser = async (
       if (usernameExists) {
         res.status(409).json({
           error: 'USERNAME_EXISTS',
-          message: 'This username is already in use'
+        message: req.t('user:errors.usernameExists') ?? 'This username is already in use'
         });
         return;
       }
@@ -257,7 +257,7 @@ export const updateUser = async (
       if (phoneExists) {
         res.status(409).json({
           error: 'PHONE_EXISTS',
-          message: 'This phone number is already in use'
+        message: req.t('user:errors.phoneExists') ?? 'This phone number is already in use'
         });
         return;
       }
@@ -294,7 +294,7 @@ export const updateUser = async (
 
     res.json({
       success: true,
-      message: 'User updated successfully',
+      message: req.t('user:messages.updateSuccess') ?? 'User updated successfully',
       user: updatedUser,
     });
   } catch (error) {
@@ -312,7 +312,7 @@ export const deleteUser = async (
     if (isNaN(userId)) {
       res.status(400).json({
         error: 'INVALID_ID',
-        message: 'Invalid user ID provided'
+        message: req.t('user:errors.invalidId') ?? 'Invalid user ID provided'
       });
       return;
     }
@@ -325,7 +325,7 @@ export const deleteUser = async (
     if (!existingUser) {
       res.status(404).json({
         error: 'USER_NOT_FOUND',
-        message: 'User not found'
+        message: req.t('user:errors.notFound') ?? 'User not found'
       });
       return;
     }
@@ -368,7 +368,7 @@ export const deleteUser = async (
 
     res.json({
       success: true,
-      message: 'User deleted successfully'
+      message: req.t('user:messages.deleteSuccess') ?? 'User deleted successfully'
     });
   } catch (error) {
     next(error);

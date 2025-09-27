@@ -27,7 +27,7 @@ export async function initI18n(): Promise<void> {
     },
 
     ns: ['common', 'auth', 'emails', 'errors', 'performance',
-      'chat','account','assignment','audit','insights','product','productionLine'],
+      'chat','account','assignment','audit','insights','product','productionLine','user','worker'],
     defaultNS: 'common',
 
     interpolation: {

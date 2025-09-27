@@ -1,14 +1,31 @@
 {
   "server": {
     "internalError": "Internal server error",
-    "configError": "Internal server configuration error",
+    "configError": "Server configuration error",
     "routeNotFound": "The requested route {{route}} does not exist",
     "unauthorized": "Please log in to access this resource",
-    "forbidden": "This action requires {{roles}} privileges"
+    "forbidden": "This action requires {{roles}} privileges",
+    "production": "Something went wrong on our end"
   },
   "validation": {
     "required": "This field is required",
     "invalidEmail": "Please enter a valid email address",
     "passwordTooShort": "Password must be at least 8 characters long"
+  },
+  "database": {
+    "uniqueConstraint": "A record with this information already exists",
+    "recordNotFound": "The requested resource was not found", 
+    "foreignKeyConstraint": "Invalid reference to related resource",
+    "general": "An error occurred while processing your request"
+  },
+  "auth": {
+    "invalidToken": "Please log in again",
+    "tokenExpired": "Your session has expired. Please log in again"
+  },
+  "rateLimit": {
+    "general": "Too many requests from this IP, please try again later.",
+    "auth": "Too many authentication attempts, please try again later.",
+    "imageUpload": "Too many image upload attempts, please try again later.",
+    "aiInsights": "AI insights can only be generated once every 30 minutes"
   }
 }

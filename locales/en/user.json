@@ -1,0 +1,14 @@
+{
+  "messages": {
+    "createSuccess": "User created successfully",
+    "updateSuccess": "User updated successfully", 
+    "deleteSuccess": "User deleted successfully"
+  },
+  "errors": {
+    "invalidId": "Invalid user ID provided",
+    "notFound": "User not found",
+    "emailExists": "An account with this email already exists",
+    "usernameExists": "An account with this username already exists", 
+    "phoneExists": "An account with this phone number already exists"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "messages": {
+    "createSuccess": "Ouvrier créé avec succès",
+    "updateSuccess": "Ouvrier mis à jour avec succès",
+    "deleteSuccess": "Ouvrier supprimé avec succès",
+    "importSuccess": "Importation terminée. {{imported}} ouvriers importés, {{errors}} erreurs"
+  },
+  "errors": {
+    "invalidId": "ID ouvrier invalide fourni",
+    "notFound": "Ouvrier introuvable",
+    "cinExists": "Cette CIN est déjà utilisée",
+    "emailExists": "Cet email est déjà utilisé",
+    "phoneExists": "Ce numéro de téléphone est déjà utilisé",
+    "noFile": "Aucun fichier téléchargé",
+    "invalidCsv": "Format CSV invalide",
+    "emptyCsv": "Le fichier CSV est vide",
+    "missingColumns": "Colonnes requises manquantes : {{columns}}",
+    "missingFields": "Champs requis manquants (nom, cin)",
+    "cinExistsImport": "CIN {{cin}} existe déjà",
+    "emailExistsImport": "Email {{email}} existe déjà",
+    "phoneExistsImport": "Téléphone {{phone}} existe déjà"
+  }
+}

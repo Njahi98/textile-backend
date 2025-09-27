@@ -19,25 +19,25 @@ export const errorHandler = (
       case 'P2002':
         res.status(409).json({
           error: 'Unique constraint violation',
-          message: 'A record with this information already exists',
+          message: req.t('errors:database.uniqueConstraint') ?? 'A record with this information already exists',
         });
         return;
       case 'P2025':
         res.status(404).json({
           error: 'Record not found',
-          message: 'The requested resource was not found',
+          message: req.t('errors:database.recordNotFound') ?? 'The requested resource was not found',
         });
         return;
       case 'P2003':
         res.status(400).json({
           error: 'Foreign key constraint violation',
-          message: 'Invalid reference to related resource',
+          message: req.t('errors:database.foreignKeyConstraint') ?? 'Invalid reference to related resource',
         });
         return;
       default:
         res.status(500).json({
           error: 'Database error',
-          message: 'An error occurred while processing your request',
+          message: req.t('errors:database.general') ?? 'An error occurred while processing your request',
         });
         return;
     }
@@ -47,7 +47,7 @@ export const errorHandler = (
   if (error.name === 'JsonWebTokenError') {
     res.status(401).json({
       error: 'Invalid token',
-      message: 'Please log in again',
+      message: req.t('errors:auth.invalidToken') ?? 'Please log in again',
     });
     return;
   }
@@ -55,7 +55,7 @@ export const errorHandler = (
   if (error.name === 'TokenExpiredError') {
     res.status(401).json({
       error: 'Token expired',
-      message: 'Your session has expired. Please log in again',
+      message: req.t('errors:auth.tokenExpired') ?? 'Your session has expired. Please log in again',
     });
     return;
   }
@@ -73,7 +73,7 @@ export const errorHandler = (
   res.status(500).json({
     error: 'Internal server error',
     message: process.env.NODE_ENV === 'production' 
-      ? 'Something went wrong on our end' 
+      ? req.t('errors:server.production') ?? 'Something went wrong on our end'
       : error.message,
   });
 };

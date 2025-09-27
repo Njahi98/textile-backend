@@ -1,0 +1,23 @@
+{
+  "messages": {
+    "createSuccess": "Worker created successfully",
+    "updateSuccess": "Worker updated successfully",
+    "deleteSuccess": "Worker deleted successfully",
+    "importSuccess": "Import completed. {{imported}} workers imported, {{errors}} errors"
+  },
+  "errors": {
+    "invalidId": "Invalid worker ID provided",
+    "notFound": "Worker not found",
+    "cinExists": "This CIN is already in use",
+    "emailExists": "This email is already in use",
+    "phoneExists": "This phone number is already in use",
+    "noFile": "No file uploaded",
+    "invalidCsv": "Invalid CSV format",
+    "emptyCsv": "CSV file is empty",
+    "missingColumns": "Missing required columns: {{columns}}",
+    "missingFields": "Missing required fields (name, cin)",
+    "cinExistsImport": "CIN {{cin}} already exists",
+    "emailExistsImport": "Email {{email}} already exists",
+    "phoneExistsImport": "Phone {{phone}} already exists"
+  }
+}
