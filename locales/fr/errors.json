@@ -27,7 +27,5 @@
     "auth": "Trop de tentatives d'authentification, veuillez réessayer plus tard.",
     "imageUpload": "Trop de tentatives de téléchargement d'images, veuillez réessayer plus tard.",
     "aiInsights": "Les insights IA ne peuvent être générés qu'une fois toutes les 30 minutes"
-  },"csrf":{
-    "invalid": "Jeton CSRF invalide"
   }
 }
