@@ -13,6 +13,7 @@ import { cleanupExpiredSessions } from './utils/sessionManager';
 import compression from 'compression';
 import helmet from 'helmet';
 import i18n, { i18nMiddleware, initI18n } from './utils/i18n'
+import { generateCsrfToken, verifyCsrfToken } from './middleware/csrf';
 
 
 import authRoutes from './routes/auth';
@@ -100,6 +101,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 app.use(i18nMiddleware.handle(i18n));
 
+app.use(generateCsrfToken);
+
 app.disable('x-powered-by');
 
 app.get('/api/health', (req:express.Request, res:express.Response) => {
@@ -120,19 +123,17 @@ app.use('/api/auth',
   process.env.NODE_ENV === 'production' ? authLimiter : [],
   authRoutes
 );
-app.use('/api/', [
-  dashboardRoutes,
-  userRoutes,
-  workerRoutes,
-  productionLineRoutes,
-  assignmentRoutes,
-  productRoutes,
-  performanceRecordRoutes,
-  accountRoutes,
-  chatRoutes,
-  insightsRoutes,
-  auditRoutes,
-]);
+app.use('/api/dashboard', verifyCsrfToken, dashboardRoutes);
+app.use('/api/users', verifyCsrfToken, userRoutes);
+app.use('/api/workers', verifyCsrfToken, workerRoutes);
+app.use('/api/production-lines', verifyCsrfToken, productionLineRoutes);
+app.use('/api/assignments', verifyCsrfToken, assignmentRoutes);
+app.use('/api/products', verifyCsrfToken, productRoutes);
+app.use('/api/performance', verifyCsrfToken, performanceRecordRoutes);
+app.use('/api/settings', verifyCsrfToken, accountRoutes);
+app.use('/api/chat', verifyCsrfToken, chatRoutes);
+app.use('/api/insights', verifyCsrfToken, insightsRoutes);
+app.use('/api/audit-logs', verifyCsrfToken, auditRoutes);
 
 app.use((req, res) => {
   res.status(404).json({

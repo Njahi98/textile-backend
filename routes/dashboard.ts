@@ -12,14 +12,14 @@ const router = express.Router();
 
 router.use(isAuthenticated);
 
-router.get('/dashboard/stats', getDashboardStats);
+router.get('/stats', getDashboardStats);
 
-router.get('/dashboard/production-metrics', getProductionMetrics);
+router.get('/production-metrics', getProductionMetrics);
 
-router.get('/dashboard/worker-performance', getWorkerPerformance);
+router.get('/worker-performance', getWorkerPerformance);
 
-router.get('/dashboard/recent-activities', getRecentActivities);
+router.get('/recent-activities', getRecentActivities);
 
-router.get('/dashboard/production-trends', getProductionTrends);
+router.get('/production-trends', getProductionTrends);
 
 export default router;

@@ -3,36 +3,15 @@ import { prisma } from '../server';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { RegisterRequest, LoginRequest, emailResetRequest, PasswordResetRequest } from '../utils/validation';
-import { CustomError } from '../middleware/errorHandler';
 import { sendEmail } from '../utils/email';
 import { AuthenticatedRequest, passwordResetJwtPayload } from '../types';
 import crypto from 'crypto';
-import { 
-  createUserSession, 
-  validateUserSession, 
-  revokeUserSession, 
-  revokeAllUserSessions,
-} from '../utils/sessionManager';
+import { createUserSession, validateUserSession, revokeUserSession, revokeAllUserSessions } from '../utils/sessionManager';
 import { OAuth2Client } from 'google-auth-library';
 import AuditService from '../utils/auditService';
 
-
-if (!process.env.JWT_SECRET) {
-  const error = new Error('JWT_SECRET is not configured') as CustomError;
-  error.statusCode = 500;
-  error.message = 'Internal server configuration error';
-  throw error;
-}
-
-if (!process.env.JWT_REFRESH_SECRET) {
-  const error = new Error('JWT_REFRESH_SECRET is not configured') as CustomError;
-  error.statusCode = 500;
-  error.message = 'Internal server configuration error';
-  throw error;
-}
-
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET!;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
 const ACCESS_TOKEN_EXPIRES_IN = '15m'; 
 const REFRESH_TOKEN_EXPIRES_IN = '7d'; 
 const ACCESS_COOKIE_MAX_AGE = 15 * 60 * 1000; 
@@ -43,7 +22,7 @@ const googleClient = new OAuth2Client(
   process.env.GOOGLE_CLIENT_SECRET,
 );
 
-// Helper function to generate token pair and store refresh token in database
+// Generate token pair and store refresh token
 const generateTokenPair = async (userId: number, req: Request) => {
   const accessToken = jwt.sign(
     { userId, type: 'access' },
@@ -57,50 +36,41 @@ const generateTokenPair = async (userId: number, req: Request) => {
     { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
   );
 
-  // Store refresh token in database
   await createUserSession(userId, refreshToken, req);
-
   return { accessToken, refreshToken };
 };
 
-// Helper function to set auth cookies
+// Set authentication cookies
 const setAuthCookies = (res: Response, accessToken: string, refreshToken: string) => {
-  res.cookie('accessToken', accessToken, {
+  const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: ACCESS_COOKIE_MAX_AGE,
-  });
+  } as const;
 
-  res.cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: REFRESH_COOKIE_MAX_AGE,
-  });
+  res.cookie('accessToken', accessToken, { ...cookieOptions, maxAge: ACCESS_COOKIE_MAX_AGE });
+  res.cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: REFRESH_COOKIE_MAX_AGE });
 };
 
-// Helper function to clear auth cookies
+// Clear authentication cookies
 const clearAuthCookies = (res: Response) => {
-  res.clearCookie('accessToken', {
+  const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     path: '/',
-  });
-  res.clearCookie('refreshToken', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    path: '/',
-  });
+  } as const;
+
+  res.clearCookie('accessToken', cookieOptions);
+  res.clearCookie('refreshToken', cookieOptions);
 };
 
-export const register = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+// Standard error response
+const errorResponse = (res: Response, status: number, error: string, message: string) => {
+  res.status(status).json({ error, message });
+};
+
+export const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { email, password, username }: RegisterRequest = req.body;
 
@@ -110,28 +80,14 @@ export const register = async (
     });
 
     if (existingUser) {
-      res.status(409).json({ 
-        error: 'UserExists',
-        message: req.t('auth:errors.userExists')
-      });
+      errorResponse(res, 409, 'UserExists', req.t('auth:errors.userExists'));
       return;
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const user = await prisma.user.create({
-      data: {
-        email,
-        username,
-        password: hashedPassword,
-      },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        role: true,
-        createdAt: true,
-      },
+      data: { email, username, password: hashedPassword },
+      select: { id: true, email: true, username: true, role: true, createdAt: true },
     });
 
     const { accessToken, refreshToken } = await generateTokenPair(user.id, req);
@@ -147,11 +103,7 @@ export const register = async (
   }
 };
 
-export const login = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { email, password }: LoginRequest = req.body;
 
@@ -164,40 +116,29 @@ export const login = async (
         password: true,
         role: true,
         status: true,
-        avatarUrl:true,
+        avatarUrl: true,
       },
     });
 
-    if (!user) {
-      res.status(401).json({ 
-        error: 'InvalidCredentials',
-        message: req.t('auth:errors.invalidCredentials')
-      });
-      return;
-    }
-
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    
-    if (!isValidPassword) {
-      res.status(401).json({ 
-        error: 'InvalidCredentials',
-        message: req.t('auth:errors.invalidCredentials') ?? 'Email or password is incorrect'
-      });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      errorResponse(res, 401, 'InvalidCredentials', req.t('auth:errors.invalidCredentials'));
       return;
     }
 
     if (user.status !== 'active') {
-      res.status(403).json({
-        error: 'AccountInactive',
-        message: req.t('auth:errors.accountInactive', { status: user.status }) ?? ('Your account is currently ' + user.status + ' and cannot be accessed')
-      });
+      errorResponse(
+        res, 
+        403, 
+        'AccountInactive', 
+        req.t('auth:errors.accountInactive', { status: user.status }) ?? 
+        `Your account is currently ${user.status} and cannot be accessed`
+      );
       return;
     }
 
     const { accessToken, refreshToken } = await generateTokenPair(user.id, req);
     setAuthCookies(res, accessToken, refreshToken);
 
-    // Log successful login
     await AuditService.logAuth('LOGIN', user.id, req, {
       loginMethod: 'email',
       userAgent: req.get('User-Agent'),
@@ -219,81 +160,51 @@ export const login = async (
   }
 };
 
-export const refreshToken = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const refreshToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const refreshToken = req.cookies.refreshToken;
 
     if (!refreshToken) {
-      res.status(401).json({
-        error: 'NoRefreshToken',
-        message: req.t('auth:errors.noRefreshToken') ?? 'Refresh token is required',
-      });
+      errorResponse(res, 401, 'NoRefreshToken', req.t('auth:errors.noRefreshToken') ?? 'Refresh token is required');
       return;
     }
 
-    // Validate refresh token in database
     const sessionData = await validateUserSession(refreshToken);
     if (!sessionData) {
       clearAuthCookies(res);
-      res.status(401).json({
-        error: 'InvalidRefreshToken',
-        message: req.t('auth:errors.invalidRefreshToken') ?? 'Invalid or expired refresh token',
-      });
+      errorResponse(res, 401, 'InvalidRefreshToken', req.t('auth:errors.invalidRefreshToken') ?? 'Invalid or expired refresh token');
       return;
     }
 
-    // Verify JWT token
     let decoded;
     try {
       decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET) as any;
     } catch (jwtError) {
-      // Revoke invalid session from database
       await revokeUserSession(refreshToken);
       clearAuthCookies(res);
-      res.status(401).json({
-        error: 'InvalidRefreshToken',
-        message: req.t('auth:errors.invalidRefreshToken') ?? 'Invalid or expired refresh token',
-      });
+      errorResponse(res, 401, 'InvalidRefreshToken', req.t('auth:errors.invalidRefreshToken') ?? 'Invalid or expired refresh token');
       return;
     }
 
-    // Verify token type
     if (decoded.type !== 'refresh') {
       await revokeUserSession(refreshToken);
       clearAuthCookies(res);
-      res.status(401).json({
-        error: 'InvalidTokenType',
-        message: req.t('auth:errors.invalidTokenType') ?? 'Invalid token type',
-      });
+      errorResponse(res, 401, 'InvalidTokenType', req.t('auth:errors.invalidTokenType') ?? 'Invalid token type');
       return;
     }
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        role: true,
-        status: true,
-      },
+      select: { id: true, email: true, username: true, role: true, status: true },
     });
 
     if (!user || user.status !== 'active') {
       await revokeUserSession(refreshToken);
       clearAuthCookies(res);
-      res.status(401).json({
-        error: 'UserNotFound',
-        message: req.t('auth:errors.userNotFound') ?? 'User account no longer exists or has been deactivated',
-      });
+      errorResponse(res, 401, 'UserNotFound', req.t('auth:errors.userNotFound') ?? 'User account no longer exists or has been deactivated');
       return;
     }
 
-    // Revoke old refresh token and generate new token pair (token rotation)
     await revokeUserSession(refreshToken);
     const { accessToken, refreshToken: newRefreshToken } = await generateTokenPair(user.id, req);
     setAuthCookies(res, accessToken, newRefreshToken);
@@ -301,12 +212,7 @@ export const refreshToken = async (
     res.json({
       success: true,
       message: req.t('auth:success.tokensRefreshed') ?? 'Tokens refreshed successfully',
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        role: user.role,
-      },
+      user: { id: user.id, email: user.email, username: user.username, role: user.role },
     });
   } catch (error) {
     next(error);
@@ -318,22 +224,16 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
     const refreshToken = req.cookies.refreshToken;
     
     if (!refreshToken) {
-      res.status(400).json({
-        error: 'No active session',
-        message: req.t('auth:errors.noActiveSession') ?? 'You are not logged in or your session has expired'
-      });
+      errorResponse(res, 400, 'No active session', req.t('auth:errors.noActiveSession') ?? 'You are not logged in or your session has expired');
       return;
     }
 
-    // Get user info before revoking session for audit logging
     const sessionData = await validateUserSession(refreshToken);
     const userId = sessionData?.userId;
 
-    // Revoke the session from database
     await revokeUserSession(refreshToken);
     clearAuthCookies(res);
 
-    // Log logout if we have user info
     if (userId) {
       await AuditService.logAuth('LOGOUT', userId, req, {
         logoutMethod: 'manual',
@@ -346,7 +246,6 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
       message: req.t('auth:success.loggedOut') ?? 'Logged out successfully'
     });
   } catch (error) {
-    // Even if revoking fails, clear cookies
     clearAuthCookies(res);
     res.status(200).json({ 
       success: true,
@@ -364,11 +263,11 @@ export const requestPasswordReset = async(req: Request, res: Response, next: Nex
     });
 
     // Always return success to prevent email enumeration
+    const successMessage = req.t('auth:success.passwordResetSent') ?? 
+      'If an account exists with this email, you will receive a password reset link';
+
     if (!user) {
-      res.status(200).json({
-        success: true,
-        message: req.t('auth:success.passwordResetSent') ?? 'If an account exists with this email, you will receive a password reset link'
-      });
+      res.status(200).json({ success: true, message: successMessage });
       return;
     }
 
@@ -402,10 +301,7 @@ export const requestPasswordReset = async(req: Request, res: Response, next: Nex
       `
     });
 
-    res.status(200).json({
-      success: true,
-      message: req.t('auth:success.passwordResetSent') ?? 'If an account exists with this email, you will receive a password reset link'
-    });
+    res.status(200).json({ success: true, message: successMessage });
   } catch (error) {
     next(error);
   }
@@ -418,10 +314,7 @@ export const resetPassword = async(req: Request, res: Response, next: NextFuncti
     const decoded = jwt.verify(token, JWT_SECRET) as passwordResetJwtPayload;
     
     if (decoded.purpose !== 'password-reset') {
-      res.status(400).json({
-        error: 'Invalid token',
-        message: req.t('auth:errors.invalidResetToken') ?? 'Invalid reset token'
-      });
+      errorResponse(res, 400, 'Invalid token', req.t('auth:errors.invalidResetToken') ?? 'Invalid reset token');
       return;
     }
 
@@ -431,10 +324,7 @@ export const resetPassword = async(req: Request, res: Response, next: NextFuncti
     });
 
     if (!user) {
-      res.status(400).json({
-        error: 'Invalid token',
-        message: req.t('auth:errors.invalidResetToken') ?? 'Invalid reset token'
-      });
+      errorResponse(res, 400, 'Invalid token', req.t('auth:errors.invalidResetToken') ?? 'Invalid reset token');
       return;
     }
 
@@ -444,7 +334,6 @@ export const resetPassword = async(req: Request, res: Response, next: NextFuncti
       data: { password: hashedPassword }
     });
 
-    // Revoke all sessions for security after password reset
     await revokeAllUserSessions(user.id);
 
     res.status(200).json({
@@ -459,10 +348,7 @@ export const resetPassword = async(req: Request, res: Response, next: NextFuncti
 export const getCurrentUser = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
   try {
     if (!req.user) {
-      res.status(401).json({
-        error: 'Unauthorized',
-        message: req.t('auth:errors.unauthorized') ?? 'User not authenticated'
-      });
+      errorResponse(res, 401, 'Unauthorized', req.t('auth:errors.unauthorized') ?? 'User not authenticated');
       return;
     }
 
@@ -475,23 +361,15 @@ export const getCurrentUser = (req: AuthenticatedRequest, res: Response, next: N
   }
 };
 
-export const googleLogin = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const googleLogin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { credential, clientId } = req.body;
+    const { credential } = req.body;
 
     if (!credential) {
-      res.status(400).json({
-        error: 'Missing credential',
-        message: req.t('auth:errors.missingCredential') ?? 'Google credential is required'
-      });
+      errorResponse(res, 400, 'Missing credential', req.t('auth:errors.missingCredential') ?? 'Google credential is required');
       return;
     }
 
-    // Verify the Google token
     const ticket = await googleClient.verifyIdToken({
       idToken: credential,
       audience: process.env.GOOGLE_CLIENT_ID!,
@@ -499,20 +377,14 @@ export const googleLogin = async (
 
     const payload = ticket.getPayload();
     if (!payload) {
-      res.status(400).json({
-        error: 'Invalid token',
-        message: req.t('auth:errors.invalidToken') ?? 'Invalid Google credential'
-      });
+      errorResponse(res, 400, 'Invalid token', req.t('auth:errors.invalidToken') ?? 'Invalid Google credential');
       return;
     }
 
     const { sub: googleId, email, name, picture, given_name, family_name } = payload;
 
     if (!email) {
-      res.status(400).json({
-        error: 'Email required',
-        message: req.t('auth:errors.emailRequired') ?? 'Email is required from Google account'
-      });
+      errorResponse(res, 400, 'Email required', req.t('auth:errors.emailRequired') ?? 'Email is required from Google account');
       return;
     }
 
@@ -530,7 +402,6 @@ export const googleLogin = async (
     });
 
     if (user) {
-      // User exists - check if they have Google ID linked
       if (!user.googleId) {
         user = await prisma.user.update({
           where: { id: user.id },
@@ -548,14 +419,16 @@ export const googleLogin = async (
       }
 
       if (user.status !== 'active') {
-        res.status(403).json({
-          error: 'AccountInactive',
-          message: req.t('auth:errors.accountInactive', { status: user.status }) ?? ('Your account is currently ' + user.status + ' and cannot be accessed')
-        });
+        errorResponse(
+          res, 
+          403, 
+          'AccountInactive', 
+          req.t('auth:errors.accountInactive', { status: user.status }) ?? 
+          `Your account is currently ${user.status} and cannot be accessed`
+        );
         return;
       }
     } else {
-      // Create new user from Google account
       const username = email.split('@')[0] + '_' + Date.now().toString().slice(-4);
       
       user = await prisma.user.create({
@@ -566,7 +439,7 @@ export const googleLogin = async (
           lastName: family_name ?? name?.split(' ').slice(1).join(' ') ?? null,
           avatarUrl: picture ?? null,
           googleId,
-          password: '', // Empty password for Google users
+          password: '',
         },
         select: {
           id: true,
@@ -580,11 +453,9 @@ export const googleLogin = async (
       });
     }
 
-    // Generate tokens
     const { accessToken, refreshToken } = await generateTokenPair(user.id, req);
     setAuthCookies(res, accessToken, refreshToken);
 
-    // Log successful Google login
     await AuditService.logAuth('LOGIN', user.id, req, {
       loginMethod: 'google',
       userAgent: req.get('User-Agent'),

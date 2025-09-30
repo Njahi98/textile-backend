@@ -27,12 +27,12 @@ fileFilter: (req: any, file: any, cb: any) => {
 
 router.use(isAuthenticated);
 
-router.get('/workers/',getAllWorkers);
-router.get('/workers/:id', getWorkerById);
-router.post('/workers/',validate(workerCreateSchema),createWorker);
-router.post('/workers/import', skipAudit(), upload.single('file'), importWorkers);
-router.put('/workers/:id',validate(workerUpdateSchema),updateWorker);
-router.delete('/workers/:id',deleteWorker);
+router.get('/',getAllWorkers);
+router.get('/:id', getWorkerById);
+router.post('/',validate(workerCreateSchema),createWorker);
+router.post('/import', skipAudit(), upload.single('file'), importWorkers);
+router.put('/:id',validate(workerUpdateSchema),updateWorker);
+router.delete('/:id',deleteWorker);
 
 
 

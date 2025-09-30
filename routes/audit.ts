@@ -18,29 +18,29 @@ const router = express.Router();
 
 router.use(isAuthenticated);
 
-router.get('/audit-logs', 
+router.get('/', 
   requireAdminOrSuperAdmin,
   validateQuery(auditLogQuerySchema),
   getAuditLogs
 );
 
-router.get('/audit-logs/export', 
+router.get('/export', 
   requireAdminOrSuperAdmin,
   exportAuditLogs
 );
 
-router.get('/audit-logs/stats', 
+router.get('/stats', 
   requireAdminOrSuperAdmin,
   validateQuery(auditStatsQuerySchema),
   getAuditStats
 );
 
-router.get('/audit-logs/:id', 
+router.get('/:id', 
   requireAdminOrSuperAdmin,
   getAuditLogById
 );
 
-router.delete('/audit-logs/cleanup', 
+router.delete('/cleanup', 
   requireSuperAdmin,
   cleanupAuditLogs
 );

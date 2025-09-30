@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express from 'express';
 import { isAuthenticated } from '../middleware/isAuthenticated';
 import { validate, validateQuery } from '../middleware/validation';
 import * as chatController from '../controllers/chat.controller';
@@ -15,45 +15,45 @@ const router = express.Router();
 
 router.use(isAuthenticated);
 
-router.get('/chat/conversations', 
+router.get('/conversations', 
   validateQuery(PaginationSchema),
   chatController.getConversations
 );
 
-router.post('/chat/conversations', 
+router.post('/conversations', 
   validate(createConversationSchema),
   chatController.createConversation
 );
 
-router.get('/chat/conversations/:conversationId/messages', 
+router.get('/conversations/:conversationId/messages', 
   validateQuery(PaginationSchema),
   chatController.getConversationMessages
 );
-router.post('/chat/conversations/:conversationId/upload', 
+router.post('/conversations/:conversationId/upload', 
   chatUploadSingle,
   chatController.uploadFile
 );
 
-router.get('/chat/notifications', 
+router.get('/notifications', 
   validateQuery(PaginationSchema),
   chatController.getNotifications
 );
 
-router.put('/chat/notifications/read', 
+router.put('/notifications/read', 
   validate(markNotificationsReadSchema),
   chatController.markNotificationsRead
 );
 
-router.get('/chat/users/search', 
+router.get('/users/search', 
   validateQuery(searchUsersSchema),
   chatController.searchUsers
 );
 
-router.post('/chat/test-notification',
+router.post('/test-notification',
   chatController.testNotification
 );
 
-router.delete('/chat/notifications', 
+router.delete('/notifications', 
   chatController.clearAllNotifications
 );
 

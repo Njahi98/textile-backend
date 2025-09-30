@@ -1,5 +1,5 @@
 import express from 'express';
-import { isAuthenticated, requireAdmin } from '../middleware/isAuthenticated';
+import { isAuthenticated } from '../middleware/isAuthenticated';
 import { validate } from '../middleware/validation';
 import { createProductSchema, updateProductSchema } from '../utils/validation';
 import { uploadSingle } from '../middleware/multer';
@@ -18,11 +18,11 @@ const router = express.Router();
 
 router.use(isAuthenticated);
 
-router.get('/products/', getAllProducts);
-router.get('/products/:id', getProductById);
+router.get('/', getAllProducts);
+router.get('/:id', getProductById);
 
 // Create product with optional image
-router.post('/products/', 
+router.post('/', 
   process.env.NODE_ENV === 'production' ? imageUploadLimiter : [],
   uploadSingle, 
   validate(createProductSchema), 
@@ -30,18 +30,18 @@ router.post('/products/',
 );
 
 // Update product with optional image
-router.put('/products/:id', 
+router.put('/:id', 
   process.env.NODE_ENV === 'production' ? imageUploadLimiter : [],
   uploadSingle, 
   validate(updateProductSchema), 
   updateProduct
 );
 
-router.patch('/products/:id/toggle-status', toggleProductStatus);
+router.patch('/:id/toggle-status', toggleProductStatus);
 
 // Delete product image only
-router.delete('/products/:id/image', deleteProductImage);
+router.delete('/:id/image', deleteProductImage);
 
-router.delete('/products/:id', deleteProduct);
+router.delete('/:id', deleteProduct);
 
 export default router;

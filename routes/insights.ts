@@ -8,7 +8,7 @@ import { InsightsQueryInputSchema } from '../utils/validation';
 const router = Router();
 
 router.get(
-  '/insights/',
+  '/',
   isAuthenticated,
   aiInsightsRateLimit,
   validateQuery(InsightsQueryInputSchema),

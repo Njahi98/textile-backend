@@ -1,5 +1,5 @@
 import express from 'express';
-import { isAuthenticated, requireAdmin } from '../middleware/isAuthenticated';
+import { isAuthenticated } from '../middleware/isAuthenticated';
 import {
   getAllProductionLines,
   getProductionLineById,
@@ -15,11 +15,11 @@ const router = express.Router();
 
 router.use(isAuthenticated);
 
-router.get('/production-lines/', getAllProductionLines);
-router.get('/production-lines/:id', getProductionLineById);
-router.post('/production-lines/', validate(createProductionLineSchema), createProductionLine);
-router.put('/production-lines/:id', validate(updateProductionLineSchema), updateProductionLine);
-router.patch('/production-lines/:id/toggle', toggleProductionLineStatus);
-router.delete('/production-lines/:id', deleteProductionLine);
+router.get('/', getAllProductionLines);
+router.get('/:id', getProductionLineById);
+router.post('/', validate(createProductionLineSchema), createProductionLine);
+router.put('/:id', validate(updateProductionLineSchema), updateProductionLine);
+router.patch('/:id/toggle', toggleProductionLineStatus);
+router.delete('/:id', deleteProductionLine);
 
 export default router; 

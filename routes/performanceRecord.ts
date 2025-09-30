@@ -27,11 +27,11 @@ const router = express.Router();
 
 router.use(isAuthenticated);
 
-router.get('/performance/',validateQuery(performanceRecordQuerySchema), getAllPerformanceRecords);
-router.get('/performance/analytics', withRequestHandler(getPerformanceAnalytics));
-router.get('/performance/:id', withRequestHandler(getPerformanceRecordById));
-router.post('/performance/', validate(createPerformanceRecordSchema), withRequestHandler(createPerformanceRecord));
-router.put('/performance/:id', validate(updatePerformanceRecordSchema), withRequestHandler(updatePerformanceRecord));
-router.delete('/performance/:id', withRequestHandler(deletePerformanceRecord));
+router.get('/',validateQuery(performanceRecordQuerySchema), getAllPerformanceRecords);
+router.get('/analytics', withRequestHandler(getPerformanceAnalytics));
+router.get('/:id', withRequestHandler(getPerformanceRecordById));
+router.post('/', validate(createPerformanceRecordSchema), withRequestHandler(createPerformanceRecord));
+router.put('/:id', validate(updatePerformanceRecordSchema), withRequestHandler(updatePerformanceRecord));
+router.delete('/:id', withRequestHandler(deletePerformanceRecord));
 
 export default router;
