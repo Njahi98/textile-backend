@@ -16,19 +16,19 @@ import { imageUploadLimiter } from '../middleware/rateLimiter';
 const router = express.Router();
 router.use(isAuthenticated);
 
-router.get('/account/', accountSettings);
+router.get('/settings/account/', accountSettings);
 
-router.put('/account/', validate(updateUserSchema), updateAccount);
+router.put('/settings/account/', validate(updateUserSchema), updateAccount);
 
 router.put(
-  '/account/avatar',
+  '/settings/account/avatar',
   process.env.NODE_ENV === 'production' ? imageUploadLimiter : [],
   uploadSingle,
   updateAvatar
 );
 
-router.delete('/account/avatar', deleteAvatar);
+router.delete('/settings/account/avatar', deleteAvatar);
 
-router.delete('/account/', deleteAccount, logout);
+router.delete('/settings/account/', deleteAccount, logout);
 
 export default router;

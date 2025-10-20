@@ -18,11 +18,11 @@ const router = express.Router();
 
 router.use(isAuthenticated);
 
-router.get('/', getAllProducts);
-router.get('/:id', getProductById);
+router.get('/products/', getAllProducts);
+router.get('/products/:id', getProductById);
 
 // Create product with optional image
-router.post('/', 
+router.post('/products/', 
   process.env.NODE_ENV === 'production' ? imageUploadLimiter : [],
   uploadSingle, 
   validate(createProductSchema), 
@@ -30,18 +30,18 @@ router.post('/',
 );
 
 // Update product with optional image
-router.put('/:id', 
+router.put('/products/:id', 
   process.env.NODE_ENV === 'production' ? imageUploadLimiter : [],
   uploadSingle, 
   validate(updateProductSchema), 
   updateProduct
 );
 
-router.patch('/:id/toggle-status', toggleProductStatus);
+router.patch('/products/:id/toggle-status', toggleProductStatus);
 
 // Delete product image only
-router.delete('/:id/image', deleteProductImage);
+router.delete('/products/:id/image', deleteProductImage);
 
-router.delete('/:id', deleteProduct);
+router.delete('/products/:id', deleteProduct);
 
 export default router;

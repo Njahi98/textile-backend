@@ -7,6 +7,7 @@ import {
   getAuditStats,
   exportAuditLogs,
   cleanupAuditLogs,
+  logFrontendExport,
 } from '../controllers/auditLog.controller';
 import {
   auditLogQuerySchema,
@@ -18,31 +19,36 @@ const router = express.Router();
 
 router.use(isAuthenticated);
 
-router.get('/', 
+router.get('/audit-logs/', 
   requireAdminOrSuperAdmin,
   validateQuery(auditLogQuerySchema),
   getAuditLogs
 );
 
-router.get('/export', 
+router.get('/audit-logs/export', 
   requireAdminOrSuperAdmin,
   exportAuditLogs
 );
 
-router.get('/stats', 
+router.get('/audit-logs/stats', 
   requireAdminOrSuperAdmin,
   validateQuery(auditStatsQuerySchema),
   getAuditStats
 );
 
-router.get('/:id', 
+router.get('/audit-logs/:id', 
   requireAdminOrSuperAdmin,
   getAuditLogById
 );
 
-router.delete('/cleanup', 
+router.delete('/audit-logs/cleanup', 
   requireSuperAdmin,
   cleanupAuditLogs
+);
+
+router.post('/audit-logs/log-export', 
+  requireAdminOrSuperAdmin,
+  logFrontendExport
 );
 
 export default router;

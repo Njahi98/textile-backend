@@ -490,3 +490,64 @@ export const cleanupAuditLogs = async (
     next(error);
   }
 };
+
+// Log frontend CSV export actions
+ 
+export const logFrontendExport = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { exportType, metadata } = req.body;
+
+    if (!exportType || !metadata) {
+      res.status(400).json({
+        success: false,
+        message: 'Export type and metadata are required',
+      });
+      return; 
+    }
+
+    let resource: AuditResource;
+    let description: string;
+
+    switch (exportType) {
+      case 'performance_analytics':
+        resource = AuditResource.PERFORMANCE_RECORD;
+        description = `Exported performance analytics data (${metadata.dataPoints} data points, ${metadata.groupBy} grouping)`;
+        break;
+      case 'performance_ai_insights':
+        resource = AuditResource.PERFORMANCE_RECORD;
+        description = `Exported AI insights report (${metadata.dataAnalyzed?.totalRecords || 0} records analyzed)`;
+        break;
+      default:
+        res.status(400).json({
+          success: false,
+          message: 'Invalid export type',
+        });
+        return;
+    }
+
+    // Log the export action
+    await AuditService.logImportExport(
+      'EXPORT',
+      resource,
+      req.user!.id,
+      req,
+      {
+        exportType,
+        ...metadata,
+      },
+      description
+    );
+
+    res.json({
+      success: true,
+      message: 'Export action logged successfully',
+    });
+    return;
+  } catch (error) {
+    next(error);
+  }
+};

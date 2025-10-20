@@ -15,45 +15,45 @@ const router = express.Router();
 
 router.use(isAuthenticated);
 
-router.get('/conversations', 
+router.get('/chat/conversations', 
   validateQuery(PaginationSchema),
   chatController.getConversations
 );
 
-router.post('/conversations', 
+router.post('/chat/conversations', 
   validate(createConversationSchema),
   chatController.createConversation
 );
 
-router.get('/conversations/:conversationId/messages', 
+router.get('/chat/conversations/:conversationId/messages', 
   validateQuery(PaginationSchema),
   chatController.getConversationMessages
 );
-router.post('/conversations/:conversationId/upload', 
+router.post('/chat/conversations/:conversationId/upload', 
   chatUploadSingle,
   chatController.uploadFile
 );
 
-router.get('/notifications', 
+router.get('/chat/notifications', 
   validateQuery(PaginationSchema),
   chatController.getNotifications
 );
 
-router.put('/notifications/read', 
+router.put('/chat/notifications/read', 
   validate(markNotificationsReadSchema),
   chatController.markNotificationsRead
 );
 
-router.get('/users/search', 
+router.get('/chat/users/search', 
   validateQuery(searchUsersSchema),
   chatController.searchUsers
 );
 
-router.post('/test-notification',
+router.post('/chat/test-notification',
   chatController.testNotification
 );
 
-router.delete('/notifications', 
+router.delete('/chat/notifications', 
   chatController.clearAllNotifications
 );
 

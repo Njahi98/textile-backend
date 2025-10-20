@@ -121,17 +121,19 @@ app.use('/api/auth',
   process.env.NODE_ENV === 'production' ? authLimiter : [],
   authRoutes
 );
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/workers', workerRoutes);
-app.use('/api/production-lines', productionLineRoutes);
-app.use('/api/assignments', assignmentRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/performance', performanceRecordRoutes);
-app.use('/api/settings', accountRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/api/insights', insightsRoutes);
-app.use('/api/audit-logs', auditRoutes);
+app.use('/api/', [
+  dashboardRoutes,
+  userRoutes,
+  workerRoutes,
+  productionLineRoutes,
+  assignmentRoutes,
+  productRoutes,
+  performanceRecordRoutes,
+  accountRoutes,
+  chatRoutes,
+  insightsRoutes,
+  auditRoutes,
+]);
 
 app.use((req, res) => {
   res.status(404).json({

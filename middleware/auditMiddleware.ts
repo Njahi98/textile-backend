@@ -10,16 +10,16 @@ const routeResourceMap: { [key: string]: AuditResource } = {
   '/api/products': AuditResource.PRODUCT,
   '/api/production-lines': AuditResource.PRODUCTION_LINE,
   '/api/assignments': AuditResource.ASSIGNMENT,
-  '/api/performance-records': AuditResource.PERFORMANCE_RECORD,
-  '/api/account': AuditResource.ACCOUNT,
+  '/api/performance': AuditResource.PERFORMANCE_RECORD,
+  '/api/settings/account': AuditResource.ACCOUNT,
   // Also map without /api/ prefix for when paths are stripped
   '/users': AuditResource.USER,
   '/workers': AuditResource.WORKER,
   '/products': AuditResource.PRODUCT,
   '/production-lines': AuditResource.PRODUCTION_LINE,
   '/assignments': AuditResource.ASSIGNMENT,
-  '/performance-records': AuditResource.PERFORMANCE_RECORD,
-  '/account': AuditResource.ACCOUNT,
+  '/performance': AuditResource.PERFORMANCE_RECORD,
+  '/settings/account': AuditResource.ACCOUNT,
 };
 
 // Get resource from route
