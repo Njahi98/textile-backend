@@ -122,17 +122,76 @@ class AuditService {
 
   /**
    * Get client IP address from request
+   * Handles proxy headers properly for Render.io and other cloud providers
    */
   private static getClientIp(req?: Request): string | null {
     if (!req) return null;
     
-    return req.ip ||
-           req.connection?.remoteAddress ||
-           req.socket?.remoteAddress ||
-           (req.connection as any)?.socket?.remoteAddress ||
-           req.get('X-Forwarded-For') ||
-           req.get('X-Real-IP') ||
-           null;
+    // Check X-Forwarded-For header first (most common for proxies)
+    const xForwardedFor = req.get('X-Forwarded-For');
+    if (xForwardedFor) {
+      // X-Forwarded-For can contain multiple IPs, take the first one (original client)
+      const ips = xForwardedFor.split(',').map(ip => ip.trim());
+      const clientIp = ips[0];
+      
+      // Validate that it's not a private/internal IP
+      if (clientIp && !this.isPrivateIp(clientIp)) {
+        return clientIp;
+      }
+    }
+    
+    // Check X-Real-IP header
+    const xRealIp = req.get('X-Real-IP');
+    if (xRealIp && !this.isPrivateIp(xRealIp)) {
+      return xRealIp;
+    }
+    
+    // Check CF-Connecting-IP (Cloudflare)
+    const cfConnectingIp = req.get('CF-Connecting-IP');
+    if (cfConnectingIp && !this.isPrivateIp(cfConnectingIp)) {
+      return cfConnectingIp;
+    }
+    
+    // Check X-Client-IP header
+    const xClientIp = req.get('X-Client-IP');
+    if (xClientIp && !this.isPrivateIp(xClientIp)) {
+      return xClientIp;
+    }
+    
+    // Fallback to Express's req.ip (should work with trust proxy)
+    if (req.ip && !this.isPrivateIp(req.ip)) {
+      return req.ip;
+    }
+    
+    // Last resort: connection remote address
+    const connectionIp = req.connection?.remoteAddress || req.socket?.remoteAddress;
+    if (connectionIp && !this.isPrivateIp(connectionIp)) {
+      return connectionIp;
+    }
+    
+    return null;
+  }
+
+  /**
+   * Check if an IP address is private/internal
+   */
+  private static isPrivateIp(ip: string): boolean {
+    // Remove IPv6 prefix if present
+    const cleanIp = ip.replace(/^::ffff:/, '');
+    
+    // Check for private IP ranges
+    const privateRanges = [
+      /^10\./,                    // 10.0.0.0/8
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\./, // 172.16.0.0/12
+      /^192\.168\./,              // 192.168.0.0/16
+      /^127\./,                   // 127.0.0.0/8 (localhost)
+      /^169\.254\./,              // 169.254.0.0/16 (link-local)
+      /^::1$/,                    // IPv6 localhost
+      /^fc00:/,                   // IPv6 private
+      /^fe80:/,                   // IPv6 link-local
+    ];
+    
+    return privateRanges.some(range => range.test(cleanIp));
   }
 
   /**
