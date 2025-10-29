@@ -36,8 +36,9 @@ if (process.env.NODE_ENV === 'production' && !process.env.FRONTEND_URL) {
 }
 
 const app = express();
-// Trust proxy for proper IP detection behind Render.io load balancer
-app.set('trust proxy', true);
+// Trust only the first proxy hop (Render's edge) to avoid permissive trust-proxy
+// This satisfies express-rate-limit while still allowing IPs via X-Forwarded-For
+app.set('trust proxy', 1);
 const server = createServer(app);
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;
