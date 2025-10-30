@@ -1,4 +1,4 @@
-import express from 'express';
+import express,{Request,Response} from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
@@ -137,7 +137,7 @@ app.use('/api/', [
   auditRoutes,
 ]);
 
-app.use((req, res) => {
+app.use((req:Request, res:Response) => {
   res.status(404).json({
     error: 'Route not found',
     message: req.t('errors:server.routeNotFound', { route: req.originalUrl }) ?? `The requested route ${req.originalUrl} does not exist`,
