@@ -14,6 +14,7 @@ import {
   updatePerformanceRecord,
   deletePerformanceRecord,
   getPerformanceAnalytics,
+  exportPerformanceAnalyticsCsv,
 } from '../controllers/performanceRecord.controller';
 
 // Convert controller functions to express request handlers
@@ -29,6 +30,7 @@ router.use(isAuthenticated);
 
 router.get('/performance/',validateQuery(performanceRecordQuerySchema), getAllPerformanceRecords);
 router.get('/performance/analytics', withRequestHandler(getPerformanceAnalytics));
+router.get('/performance/analytics/export', withRequestHandler(exportPerformanceAnalyticsCsv));
 router.get('/performance/:id', withRequestHandler(getPerformanceRecordById));
 router.post('/performance/', validate(createPerformanceRecordSchema), withRequestHandler(createPerformanceRecord));
 router.put('/performance/:id', validate(updatePerformanceRecordSchema), withRequestHandler(updatePerformanceRecord));

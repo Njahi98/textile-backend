@@ -731,3 +731,197 @@ export const getPerformanceAnalytics = async (
     next(error);
   }
 };
+
+export const exportPerformanceAnalyticsCsv = async (
+  req: Request<{}, {}, {}, { 
+    startDate?: string; 
+    endDate?: string; 
+    workerId?: string; 
+    productionLineId?: string;
+    groupBy?: 'worker' | 'product' | 'productionLine' | 'date';
+  }>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { startDate, endDate, workerId, productionLineId, groupBy = 'date' } = req.query;
+
+    
+    let start: Date;
+    let end: Date;
+    if (startDate) {
+      start = new Date(startDate);
+      if (isNaN(start.getTime())) {
+        res.status(400).json({ error: 'INVALID_START_DATE' });
+        return;
+      }
+    } else {
+      start = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    }
+    if (endDate) {
+      end = new Date(endDate);
+      if (isNaN(end.getTime())) {
+        res.status(400).json({ error: 'INVALID_END_DATE' });
+        return;
+      }
+    } else {
+      end = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+    }
+
+    const where: any = {
+      date: { gte: start, lte: end },
+      worker: { isDeleted: false },
+      product: { isDeleted: false },
+      productionLine: { isDeleted: false },
+    };
+    if (workerId) where.workerId = parseInt(workerId);
+    if (productionLineId) where.productionLineId = parseInt(productionLineId);
+
+    const overallMetrics = await prisma.performanceRecord.aggregate({
+      where,
+      _sum: { piecesMade: true },
+      _avg: { errorRate: true, timeTaken: true },
+      _count: true,
+    });
+
+    let groupedData: any[] = [];
+    switch (groupBy) {
+      case 'worker':
+        groupedData = await prisma.performanceRecord.groupBy({
+          by: ['workerId'] as const,
+          where,
+          _sum: { piecesMade: true },
+          _avg: { errorRate: true, timeTaken: true },
+          _count: true,
+        } as any);
+        for (let i = 0; i < groupedData.length; i++) {
+          groupedData[i].worker = await prisma.worker.findUnique({
+            where: { id: groupedData[i].workerId },
+            select: { id: true, name: true }
+          });
+        }
+        break;
+      case 'product':
+        groupedData = await prisma.performanceRecord.groupBy({
+          by: ['productId'] as const,
+          where,
+          _sum: { piecesMade: true },
+          _avg: { errorRate: true, timeTaken: true },
+          _count: true,
+        } as any);
+        for (let i = 0; i < groupedData.length; i++) {
+          groupedData[i].product = await prisma.product.findUnique({
+            where: { id: groupedData[i].productId },
+            select: { id: true, name: true, code: true }
+          });
+        }
+        break;
+      case 'productionLine':
+        groupedData = await prisma.performanceRecord.groupBy({
+          by: ['productionLineId'] as const,
+          where,
+          _sum: { piecesMade: true },
+          _avg: { errorRate: true, timeTaken: true },
+          _count: true,
+        } as any);
+        for (let i = 0; i < groupedData.length; i++) {
+          groupedData[i].productionLine = await prisma.productionLine.findUnique({
+            where: { id: groupedData[i].productionLineId },
+            select: { id: true, name: true, location: true, capacity: true }
+          });
+        }
+        break;
+      case 'date':
+      default:
+        groupedData = await prisma.performanceRecord.groupBy({
+          by: ['date'] as const,
+          where,
+          _sum: { piecesMade: true },
+          _avg: { errorRate: true, timeTaken: true },
+          _count: true,
+          orderBy: { date: 'asc' },
+        } as any);
+        break;
+    }
+
+    
+    const transformed = groupedData.map((item: any) => ({
+      ...item,
+      _sum: { piecesMade: Number(item._sum?.piecesMade) || 0 },
+      _avg: { errorRate: Number(item._avg?.errorRate) || 0, timeTaken: Number(item._avg?.timeTaken) || 0 },
+      _count: Number(item._count) || 0,
+    }));
+
+    // Build CSV
+    const escapeCSV = (val: string | number) => `"${String(val).replace(/"/g, '""')}"`;
+    const lines: string[] = [];
+    const now = new Date();
+    lines.push(escapeCSV('PERFORMANCE ANALYTICS REPORT'));
+    lines.push(escapeCSV(`Generated on: ${now.toISOString()}`));
+    lines.push(escapeCSV(`Date Range: ${start.toISOString().slice(0,10)} to ${end.toISOString().slice(0,10)}`));
+    lines.push(escapeCSV(`Analysis grouped by: ${groupBy}`));
+    lines.push('');
+    lines.push([escapeCSV('Metric'), escapeCSV('Value'), escapeCSV('Description')].join(','));
+    lines.push([escapeCSV('Total Pieces Produced'), escapeCSV(Number(overallMetrics._sum.piecesMade) || 0), escapeCSV('Total production output across all records')].join(','));
+    lines.push([escapeCSV('Average Error Rate'), escapeCSV((Number(overallMetrics._avg.errorRate) || 0).toFixed(2) + '%'), escapeCSV('Quality metric - lower is better')].join(','));
+    lines.push([escapeCSV('Average Time Taken'), escapeCSV((Number(overallMetrics._avg.timeTaken) || 0).toFixed(1) + ' hours'), escapeCSV('Efficiency metric - time per production cycle')].join(','));
+    lines.push([escapeCSV('Total Records Analyzed'), escapeCSV(Number(overallMetrics._count) || 0), escapeCSV('Number of data points in this analysis')].join(','));
+    lines.push('');
+
+    // Detailed section header
+    const headers: string[] = ['Rank'];
+    if (groupBy === 'date') headers.push('Date');
+    else {
+      headers.push('ID', 'Name');
+      if (groupBy === 'product') headers.push('Product Code');
+      if (groupBy === 'productionLine') headers.push('Location');
+    }
+    headers.push('Pieces Produced','Error Rate (%)','Time Taken (hours)','Records Count');
+    lines.push(headers.map(escapeCSV).join(','));
+
+    const sorted = [...transformed].sort((a, b) => (b._sum.piecesMade - a._sum.piecesMade));
+    sorted.forEach((item, idx) => {
+      const row: (string|number)[] = [idx + 1];
+      if (groupBy === 'date') {
+        row.push(new Date(item.date).toISOString().slice(0,10));
+      } else if (groupBy === 'worker') {
+        row.push(item.workerId || '','' + (item.worker?.name || `Worker #${item.workerId || 'Unknown'}`));
+      } else if (groupBy === 'product') {
+        row.push(item.productId || '','' + (item.product?.name || `Product #${item.productId || 'Unknown'}`), item.product?.code || '');
+      } else if (groupBy === 'productionLine') {
+        row.push(item.productionLineId || '','' + (item.productionLine?.name || `Line #${item.productionLineId || 'Unknown'}`), item.productionLine?.location || '');
+      }
+      row.push(
+        item._sum.piecesMade,
+        (item._avg.errorRate || 0).toFixed(2),
+        (item._avg.timeTaken || 0).toFixed(1),
+        item._count
+      );
+      lines.push(row.map(escapeCSV).join(','));
+    });
+
+    const csv = lines.join('\n');
+
+    // Audit log export
+    try {
+      const { AuditResource } = await import('../generated/prisma');
+      const { default: AuditService } = await import('../utils/auditService');
+      await AuditService.logImportExport('EXPORT', AuditResource.PERFORMANCE_RECORD, (req as any).user?.id, req, {
+        exportType: 'performance_analytics',
+        groupBy,
+        dataPoints: transformed.length,
+        startDate: start,
+        endDate: end,
+        workerId: workerId ? Number(workerId) : undefined,
+        productionLineId: productionLineId ? Number(productionLineId) : undefined,
+      }, `Exported performance analytics (${groupBy})`);
+    } catch {}
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename=performance-analytics-${new Date().toISOString().slice(0,10)}.csv`);
+    res.status(200).send(csv);
+    return;
+  } catch (error) {
+    next(error);
+  }
+};
