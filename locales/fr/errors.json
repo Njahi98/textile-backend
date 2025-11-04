@@ -26,6 +26,6 @@
     "general": "Trop de requêtes depuis cette IP, veuillez réessayer plus tard.",
     "auth": "Trop de tentatives d'authentification, veuillez réessayer plus tard.",
     "imageUpload": "Trop de tentatives de téléchargement d'images, veuillez réessayer plus tard.",
-    "aiInsights": "Les insights IA ne peuvent être générés qu'une fois toutes les 30 minutes"
+    "aiInsights": "Les insights IA ne peuvent être générés qu'une fois toutes les 5 minutes"
   }
 }

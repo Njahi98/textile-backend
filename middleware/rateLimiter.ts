@@ -54,13 +54,14 @@ export const imageUploadLimiter = rateLimit({
 });
 
 export const aiInsightsRateLimit = rateLimit({
-  windowMs: 30 * 60 * 1000, // 30 minutes
+  windowMs: 5 * 60 * 1000, // 5 minutes
   max: 1, // 1 request
-message: (req: AuthenticatedRequest) => ({
+  message: (req: AuthenticatedRequest) => ({
     success: false,
     error: 'RATE_LIMIT_EXCEEDED',
-    message: req.t('errors:rateLimit.aiInsights') ?? 'AI insights can only be generated once every 30 minutes',
+    message: req.t('errors:rateLimit.aiInsights') ?? 'AI insights can only be generated once every 5 minutes',
   }),
   standardHeaders: true,
   legacyHeaders: false,
-keyGenerator: (req: AuthenticatedRequest) => req.user?.id?.toString() || getClientIp(req) || 'anonymous',});
+  keyGenerator: (req: AuthenticatedRequest) => req.user?.id?.toString() || getClientIp(req) || 'anonymous',
+});

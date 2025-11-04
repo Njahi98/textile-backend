@@ -26,6 +26,6 @@
     "general": "Too many requests from this IP, please try again later.",
     "auth": "Too many authentication attempts, please try again later.",
     "imageUpload": "Too many image upload attempts, please try again later.",
-    "aiInsights": "AI insights can only be generated once every 30 minutes"
+    "aiInsights": "AI insights can only be generated once every 5 minutes"
   }
 }
