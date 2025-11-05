@@ -79,9 +79,7 @@ This is the backend for a textile management system, built with Node.js, Express
 
 3. Run migrations:
    ```bash
-   npx prisma init --datasource-provider postgresql --output ../generated/prisma
-   npx prisma generate
-   npx prisma migrate dev --name migration_name
+   npx prisma migrate deploy
    ```
 4. Start the server:
    ```bash
