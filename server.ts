@@ -1,4 +1,4 @@
-import express,{Request,Response} from 'express';
+import express, { Request, Response } from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
@@ -12,8 +12,7 @@ import SocketService from './utils/socketService';
 import { cleanupExpiredSessions } from './utils/sessionManager';
 import compression from 'compression';
 import helmet from 'helmet';
-import i18n, { i18nMiddleware, initI18n } from './utils/i18n'
-
+import i18n, { i18nMiddleware, initI18n } from './utils/i18n';
 
 import authRoutes from './routes/auth';
 import dashboardRoutes from './routes/dashboard';
@@ -32,7 +31,9 @@ import { auditLogger } from './middleware/auditMiddleware';
 dotenv.config();
 
 if (process.env.NODE_ENV === 'production' && !process.env.FRONTEND_URL) {
-  throw new Error('FRONTEND_URL environment variable is required in production');
+  throw new Error(
+    'FRONTEND_URL environment variable is required in production',
+  );
 }
 
 const app = express();
@@ -41,13 +42,13 @@ const app = express();
 app.set('trust proxy', 1);
 const server = createServer(app);
 const prisma = new PrismaClient();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 const io = new Server(server, {
   cors: {
     origin: process.env.FRONTEND_URL,
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   },
 });
@@ -60,34 +61,40 @@ declare global {
 global.socketService = socketService;
 
 if (process.env.NODE_ENV === 'production') {
-  app.use(compression({
-    filter: (req, res) => {
-      if (req.path.startsWith('/api/auth')) {
-        return false;
-      }
-      return compression.filter(req, res);
-    },
-  }));
-
-  app.use(morgan('combined', {
-    skip: (req) => req.url === '/api/health'
-  }));
-
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-        // Allow WebSocket connections and frontend API calls
-        "connect-src": ["'self'", "ws:", "wss:", process.env.FRONTEND_URL!],
-        // Allow images from Cloudinary
-        "img-src": ["'self'", "data:", "https://res.cloudinary.com"],
+  app.use(
+    compression({
+      filter: (req, res) => {
+        if (req.path.startsWith('/api/auth')) {
+          return false;
+        }
+        return compression.filter(req, res);
       },
-    },
-    crossOriginEmbedderPolicy: false,
-  }));
+    }),
+  );
+
+  app.use(
+    morgan('combined', {
+      skip: (req) => req.url === '/api/health',
+    }),
+  );
+
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+          // Allow WebSocket connections and frontend API calls
+          'connect-src': ["'self'", 'ws:', 'wss:', process.env.FRONTEND_URL!],
+          // Allow images from Cloudinary
+          'img-src': ["'self'", 'data:', 'https://res.cloudinary.com'],
+        },
+      },
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
 
   app.use(apiLimiter);
-}else{
+} else {
   app.use(morgan('dev'));
 }
 
@@ -95,17 +102,16 @@ app.use(
   cors({
     origin: process.env.FRONTEND_URL,
     credentials: true,
-  })
+  }),
 );
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 app.use(i18nMiddleware.handle(i18n));
 
-
 app.disable('x-powered-by');
 
-app.get('/api/health', (req:express.Request, res:express.Response) => {
+app.get('/api/health', (req: express.Request, res: express.Response) => {
   res.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
@@ -119,9 +125,10 @@ app.get('/api/health', (req:express.Request, res:express.Response) => {
 
 app.use('/api/', auditLogger());
 
-app.use('/api/auth',
+app.use(
+  '/api/auth',
   process.env.NODE_ENV === 'production' ? authLimiter : [],
-  authRoutes
+  authRoutes,
 );
 app.use('/api/', [
   dashboardRoutes,
@@ -137,47 +144,64 @@ app.use('/api/', [
   auditRoutes,
 ]);
 
-app.use((req:Request, res:Response) => {
+app.use((req: Request, res: Response) => {
   res.status(404).json({
     error: 'Route not found',
-    message: req.t('errors:server.routeNotFound', { route: req.originalUrl }) ?? `The requested route ${req.originalUrl} does not exist`,
+    message:
+      req.t('errors:server.routeNotFound', { route: req.originalUrl }) ??
+      `The requested route ${req.originalUrl} does not exist`,
   });
 });
 
 app.use(errorHandler);
 
+/* Graceful shutdown handler — intercepts termination signals (SIGINT from Ctrl+C, SIGTERM from tsx watch restarts or orchestrators like Docker/Render)
+ and ensures all in-flight work finishes before the process exits: disconnects Prisma, closes the Socket.io server, then drains active HTTP connections.
+ The server.listening guard prevents a crash when SIGTERM arrives before server.listen() completes (e.g. during a fast tsx hot-reload cycle).
+*/
+let shuttingDown = false;
+
 const gracefulShutdown = async (signal: string) => {
+  if (shuttingDown) return;
+  shuttingDown = true;
   console.log(`Received ${signal}. Shutting down...`);
-  
   try {
     await prisma.$disconnect();
-    io.close();
-    server.close(() => {
-      console.log('Server closed');
-      process.exit(0);
-    });
+    await io.close();
+
+    if (server.listening) {
+      server.closeAllConnections?.();
+      await new Promise<void>((resolve, reject) =>
+        server.close((err) => (err ? reject(err) : resolve())),
+      );
+    }
+ 
+    process.exit(0);
   } catch (error) {
     console.error('Shutdown error:', error);
     process.exit(1);
   }
 };
 
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => void gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => void gracefulShutdown('SIGTERM'));
 
 // Initial cleanup on server start
 cleanupExpiredSessions()
   .then(() => console.log('Initial expired sessions cleaned up'))
-  .catch(error => console.error('Error in initial cleanup:', error));
+  .catch((error) => console.error('Error in initial cleanup:', error));
 // Cleanup expired sessions every 24 hours
-setInterval(async () => {
-  try {
-    await cleanupExpiredSessions();
-    console.log('Expired sessions cleaned up');
-  } catch (error) {
-    console.error('Error cleaning up expired sessions:', error);
-  }
-}, 24 * 60 * 60 * 1000);
+setInterval(
+  async () => {
+    try {
+      await cleanupExpiredSessions();
+      console.log('Expired sessions cleaned up');
+    } catch (error) {
+      console.error('Error cleaning up expired sessions:', error);
+    }
+  },
+  24 * 60 * 60 * 1000,
+);
 
 // Delay server start until i18n is initialized to avoid middleware receiving an uninitialized instance
 initI18n()

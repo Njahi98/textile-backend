@@ -1,4 +1,4 @@
-import { prisma } from "server";
+import { prisma } from "../server"
 
 interface NotificationData {
   type: 'NEW_MESSAGE' | 'MENTION' | 'SYSTEM' | 'PERFORMANCE_ALERT';

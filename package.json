@@ -4,7 +4,7 @@
   "main": "dist/server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsx server.ts",
+    "dev": "tsx watch server.ts",
     "build": "tsc && cp -r generated dist/generated && cp -r locales dist/locales",
     "start": "node dist/server.js"
   },
@@ -48,5 +48,8 @@
     "tsx": "^4.19.3",
     "typescript": "^5.8.3",
     "zod": "^3.25.28"
-  }
+  },
+  "overrides": {
+  "whatwg-url": "^14.0.0"
+}   
 }
