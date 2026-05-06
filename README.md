@@ -86,5 +86,43 @@ This is the backend for a textile management system, built with Node.js, Express
    npm run dev
    ```
 
+### Docker Setup
+For a quick and easy deployment, you can use Docker Compose:
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Njahi98/textile-backend.git
+   cd textile-backend
+   ```
+
+2. Create a `.env` file by copying `.env.example` and filling in the required values:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Create the shared Docker network:
+   ```bash
+   docker network create textile-network
+   ```
+
+4. Start the application with Docker Compose:
+   ```bash
+   docker compose up
+   ```
+   The server will be running by default at `http://localhost:3000`.
+
+   **Optional: Seed fake data**  
+   To populate the database with sample performance data, navigate to the backend directory and run:  
+   ```bash
+   cd textile-backend
+   docker exec -it textile_backend_c_v1 npx tsx seed_performance_data.ts
+   ```  
+   *Note: Replace `textile_backend_c_v1` with your actual container name if different (check with `docker ps`). You must be in the `textile-backend` folder.*
+
+5. To stop the services:
+   ```bash
+   docker compose down
+   ```
+
 ###  Frontend
 See [`Textile Frontend`](https://github.com/Njahi98/textile-frontend) for frontend setup and API details.
