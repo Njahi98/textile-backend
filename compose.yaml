@@ -8,42 +8,30 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
+      - /app/generated
+    env_file:
+      - .env
     environment:
-      NODE_ENV: development
       DOCKER_ENV: 'true'
-      POSTGRES_HOST: db
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: textile_app
-      POSTGRES_USER: textile_user
-      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD:-textile_password}'
-      ALLOWED_ORIGINS: '${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}'
+      POSTGRES_HOST: textile_app
     depends_on:
       db:
         condition: service_healthy
     networks:
       - textile-network
 
-  # ========================================
-  # PostgreSQL Database Service
-  # ========================================
   db:
     image: postgres:18-trixie
     container_name: textile-db
-    environment:
-      POSTGRES_DB: '${POSTGRES_DB:-textile}'
-      POSTGRES_USER: '${POSTGRES_USER:-textile}'
-      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD:-textile_password}'
+    env_file:
+      - .env
     volumes:
       - postgres_data:/var/lib/postgresql
     ports:
       - '${DB_PORT:-5432}:5432'
     restart: unless-stopped
     healthcheck:
-      test:
-        [
-          'CMD-SHELL',
-          'pg_isready -U ${POSTGRES_USER:-textile} -d ${POSTGRES_DB:-textile}',
-        ]
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-textile} -d ${POSTGRES_DB:-textile}']
       interval: 10s
       timeout: 5s
       retries: 5
