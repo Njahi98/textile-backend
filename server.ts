@@ -155,31 +155,28 @@ app.use((req: Request, res: Response) => {
 
 app.use(errorHandler);
 
-/* Graceful shutdown handler — intercepts termination signals (SIGINT from Ctrl+C, SIGTERM from tsx watch restarts or orchestrators like Docker/Render)
- and ensures all in-flight work finishes before the process exits: disconnects Prisma, closes the Socket.io server, then drains active HTTP connections.
- The server.listening guard prevents a crash when SIGTERM arrives before server.listen() completes (e.g. during a fast tsx hot-reload cycle).
-*/
 let shuttingDown = false;
 
 const gracefulShutdown = async (signal: string) => {
-  if (shuttingDown) return;
+  if (shuttingDown) return;   // guard: ignore duplicate signals
   shuttingDown = true;
   console.log(`Received ${signal}. Shutting down...`);
-  try {
-    await prisma.$disconnect();
-    await io.close();
 
-    if (server.listening) {
-      server.closeAllConnections?.();
+  try {
+    await prisma.$disconnect();       // 1. close DB connection pool
+    await io.close();                 // 2. close all WebSocket connections
+    
+    if (server.listening) {           // 3. only close if actually listening
+      server.closeAllConnections?.();   // 4. forcibly drop keep-alive HTTP connections
       await new Promise<void>((resolve, reject) =>
-        server.close((err) => (err ? reject(err) : resolve())),
+        server.close((err) => (err ? reject(err) : resolve()))
       );
     }
- 
-    process.exit(0);
+
+    process.exit(0);               // clean exit
   } catch (error) {
     console.error('Shutdown error:', error);
-    process.exit(1);
+    process.exit(1);               // exit with error code
   }
 };
 
